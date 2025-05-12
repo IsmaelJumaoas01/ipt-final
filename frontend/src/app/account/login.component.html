@@ -1,0 +1,67 @@
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">Welcome Back</h4>
+                    <p class="text-white-50 mb-0">Sign in to your account</p>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Error Alert -->
+                    <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        {{ error }}
+                        <button type="button" class="btn-close" (click)="error = ''" aria-label="Close"></button>
+                    </div>
+
+                    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input type="email" id="email" formControlName="email" class="form-control" 
+                                    placeholder="Enter your email" 
+                                    [ngClass]="{ 'is-invalid': submitted && f['email'].errors }" />
+                            </div>
+                            <div *ngIf="submitted && f['email'].errors" class="invalid-feedback d-block">
+                                <div *ngIf="f['email'].errors?.['required']">Email is required</div>
+                                <div *ngIf="f['email'].errors?.['email']">Please enter a valid email</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" id="password" formControlName="password" class="form-control" 
+                                    placeholder="Enter your password"
+                                    [ngClass]="{ 'is-invalid': submitted && f['password'].errors }" />
+                            </div>
+                            <div *ngIf="submitted && f['password'].errors" class="invalid-feedback d-block">
+                                <div *ngIf="f['password'].errors?.['required']">Password is required</div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" [disabled]="loading">
+                                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                                Sign In
+                            </button>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <p class="mb-2">Don't have an account? 
+                                <a routerLink="../register" class="btn-link">Sign Up</a>
+                            </p>
+                            <a routerLink="../forgot-password" class="btn-link">Forgot Password?</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,133 @@
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">Create Account</h4>
+                    <p class="text-white-50 mb-0">Join our community today</p>
+                </div>
+                <div class="card-body p-4">
+                    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">Title</label>
+                                <select id="title" formControlName="title" class="form-select"
+                                    [ngClass]="{ 'is-invalid': submitted && f['title'].errors }">
+                                    <option value="">Select Title</option>
+                                    <option value="Mr">Mr</option>
+                                    <option value="Mrs">Mrs</option>
+                                    <option value="Miss">Miss</option>
+                                    <option value="Ms">Ms</option>
+                                </select>
+                                <div *ngIf="submitted && f['title'].errors" class="invalid-feedback d-block">
+                                    Title is required
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" id="firstName" formControlName="firstName" class="form-control"
+                                    placeholder="Enter first name"
+                                    [ngClass]="{ 'is-invalid': submitted && f['firstName'].errors }" />
+                                <div *ngIf="submitted && f['firstName'].errors" class="invalid-feedback d-block">
+                                    First name is required
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" id="lastName" formControlName="lastName" class="form-control"
+                                    placeholder="Enter last name"
+                                    [ngClass]="{ 'is-invalid': submitted && f['lastName'].errors }" />
+                                <div *ngIf="submitted && f['lastName'].errors" class="invalid-feedback d-block">
+                                    Last name is required
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input type="email" id="email" formControlName="email" class="form-control"
+                                    placeholder="Enter your email"
+                                    [ngClass]="{ 'is-invalid': submitted && f['email'].errors }" />
+                            </div>
+                            <div *ngIf="submitted && f['email'].errors" class="invalid-feedback d-block">
+                                <div *ngIf="f['email'].errors?.['required']">Email is required</div>
+                                <div *ngIf="f['email'].errors?.['email']">Please enter a valid email</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" id="password" formControlName="password" class="form-control"
+                                        placeholder="Create password"
+                                        [ngClass]="{ 'is-invalid': submitted && f['password'].errors }" />
+                                </div>
+                                <div *ngIf="submitted && f['password'].errors" class="invalid-feedback d-block">
+                                    <div *ngIf="f['password'].errors?.['required']">Password is required</div>
+                                    <div *ngIf="f['password'].errors?.['minlength']">Password must be at least 6 characters</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" id="confirmPassword" formControlName="confirmPassword" class="form-control"
+                                        placeholder="Confirm password"
+                                        [ngClass]="{ 'is-invalid': submitted && f['confirmPassword'].errors }" />
+                                </div>
+                                <div *ngIf="submitted && f['confirmPassword'].errors" class="invalid-feedback d-block">
+                                    <div *ngIf="f['confirmPassword'].errors?.['required']">Confirm password is required</div>
+                                    <div *ngIf="f['confirmPassword'].errors?.['mustMatch']">Passwords must match</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input type="checkbox" id="acceptTerms" formControlName="acceptTerms" class="form-check-input"
+                                    [ngClass]="{ 'is-invalid': submitted && f['acceptTerms'].errors }" />
+                                <label for="acceptTerms" class="form-check-label">
+                                    I accept the <a href="#" class="btn-link">Terms and Conditions</a>
+                                </label>
+                                <div *ngIf="submitted && f['acceptTerms'].errors" class="invalid-feedback d-block">
+                                    You must accept the terms and conditions
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            After registration, you will receive an email with a verification link. Please check your inbox and verify your account to complete the registration process.
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" [disabled]="loading">
+                                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                                Create Account
+                            </button>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <p class="mb-0">Already have an account? 
+                                <a routerLink="../login" class="btn-link">Sign In</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

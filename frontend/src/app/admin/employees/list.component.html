@@ -1,0 +1,46 @@
+<div class="card">
+  <div class="card-header">Employees</div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th style="width: 15%">Employee ID</th>
+            <th style="width: 20%">Name</th>
+            <th style="width: 15%">Position</th>
+            <th style="width: 15%">Department</th>
+            <th style="width: 15%">Status</th>
+            <th style="width: 20%">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employee of employees">
+            <td>{{employee.employeeId}}</td>
+            <td>{{employee.user?.firstName}} {{employee.user?.lastName}}</td>
+            <td>{{employee.position}}</td>
+            <td>{{employee.department?.name}}</td>
+            <td>
+              <span *ngIf="employee.status === 'Active'" class="badge bg-success">Active</span>
+              <span *ngIf="employee.status !== 'Active'" class="badge bg-danger">{{employee.status}}</span>
+            </td>
+            <td style="white-space: nowrap">
+              <a routerLink="edit/{{employee.id}}" class="btn btn-sm btn-primary me-1">Edit</a>
+              <button (click)="deleteEmployee(employee.id)" class="btn btn-sm btn-danger btn-delete-employee" [disabled]="employee.isDeleting">
+                <span *ngIf="employee.isDeleting" class="spinner-border spinner-border-sm"></span>
+                <span *ngIf="!employee.isDeleting">Delete</span>
+              </button>
+              <button (click)="transferEmployee(employee.id)" class="btn btn-sm btn-info ms-1">Transfer</button>
+            </td>
+          </tr>
+          <tr *ngIf="!employees?.length">
+            <td colspan="6" class="text-center">
+              <span *ngIf="loading" class="spinner-border spinner-border-lg align-center"></span>
+              <span *ngIf="!loading">No employees found</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="btn btn-primary float-end" routerLink="add">Add Employee</button>
+  </div>
+</div> 

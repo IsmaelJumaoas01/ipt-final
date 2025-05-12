@@ -1,0 +1,66 @@
+<div class="app-container" [ngClass]="{ 'bg-light': account }">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" routerLink="/">User Management System</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-item nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a class="nav-item nav-link" routerLink="/account/login" routerLinkActive="active" *ngIf="!account">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                <a class="nav-item nav-link" routerLink="/account/register" routerLinkActive="active" *ngIf="!account">
+                    <i class="fas fa-user-plus"></i> Register
+                </a>
+                <a class="nav-item nav-link" routerLink="/account/forgot-password" routerLinkActive="active" *ngIf="!account">
+                    <i class="fas fa-key"></i> Forgot Password
+                </a>
+                <a class="nav-item nav-link" routerLink="/users" routerLinkActive="active" *ngIf="account?.role === Role.Admin">
+                    <i class="fas fa-users"></i> Users
+                </a>
+                <a class="nav-item nav-link" (click)="logout()" style="cursor: pointer;" *ngIf="account">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+                <a class="nav-item nav-link" (click)="showDetails()" style="cursor: pointer;">
+                    <i class="fas fa-info-circle"></i> Details
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+        <alert></alert>
+        <router-outlet></router-outlet>
+    </div>
+
+    <!-- Details Modal -->
+    <div class="modal-backdrop" *ngIf="showModal" (click)="closeModal()"></div>
+    <div class="modal" [class.show]="showModal" *ngIf="showModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">About User Management System</h5>
+                    <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>A modern and secure user management system built with Angular and Node.js.</p>
+                    <hr>
+                    <p class="mb-0">Built with <i class="fas fa-heart text-danger"></i> by:</p>
+                    <ul class="list-unstyled mt-2">
+                        <li>Arnold Cutad Jr.</li>
+                        <li>Ismael Jose Jumao-as</li>
+                        <li>Prince Dominic Lazaga</li>
+                        <li>Paul Christian Patino</li>
+                    </ul>
+                    <hr>
+                    <p class="mb-0">Version 1.0.0</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

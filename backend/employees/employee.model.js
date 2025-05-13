@@ -11,5 +11,11 @@ module.exports = (sequelize) => {
     }, {
         timestamps: false
     });
+
+    Employee.associate = (models) => {
+        Employee.belongsTo(models.Account, { foreignKey: 'userId', as: 'user' });
+        Employee.belongsTo(models.Department, { foreignKey: 'departmentId' });
+    };
+
     return Employee;
 }; 

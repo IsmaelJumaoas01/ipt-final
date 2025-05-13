@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { Router } from "@angular/router";
 import { HttpClient } from "@angular/common/http";
-import { BehaviorSubject, Observable } from "rxjs";
+import { BehaviorSubject, Observable, of } from "rxjs";
 import { map, finalize } from "rxjs/operators";
 import { environment } from "../../environments/environment";
 import { Account } from "../_models/account";
@@ -60,52 +60,27 @@ export class AccountService {
    * Logout current user and revoke refresh token
    */
   logout() {
-    console.log('Starting logout process...');
-    console.log('Current localStorage before logout:', {
-      accounts: localStorage.getItem('angular-18-signup-verification-boilerplate-accounts'),
-      currentUser: localStorage.getItem('currentUser'),
-      refreshToken: localStorage.getItem('refreshToken')
-    });
-
-    this.http
+    this.stopRefreshTokenTimer();
+    
+    // If using fake backend, clear localStorage and return
+    if (environment.useFakeBackend) {
+      localStorage.removeItem('currentUser');
+      this.accountSubject.next(null);
+      this.router.navigate(['/account/login']);
+      return of(null);
+    }
+    
+    // Revoke server-side token
+    return this.http
       .post<any>(`${baseUrl}/revoke-token`, {}, { withCredentials: true })
-      .subscribe({
-        next: () => {
-          console.log('Token revoked successfully');
-          this.stopRefreshTokenTimer();
-          this.accountSubject.next(null);
-          
-          // Clear all session-related data from localStorage
-          localStorage.removeItem('angular-18-signup-verification-boilerplate-accounts');
+      .pipe(
+        finalize(() => {
+          // Remove account from local storage and set current account to null regardless of API call result
           localStorage.removeItem('currentUser');
-          localStorage.removeItem('refreshToken');
-          
-          console.log('LocalStorage after logout:', {
-            accounts: localStorage.getItem('angular-18-signup-verification-boilerplate-accounts'),
-            currentUser: localStorage.getItem('currentUser'),
-            refreshToken: localStorage.getItem('refreshToken')
-          });
-
-          this.router.navigate(["/account/login"]);
-        },
-        error: (error) => {
-          console.error('Logout error:', error);
-          // Still clear local data even if server request fails
-          this.stopRefreshTokenTimer();
           this.accountSubject.next(null);
-          localStorage.removeItem('angular-18-signup-verification-boilerplate-accounts');
-          localStorage.removeItem('currentUser');
-          localStorage.removeItem('refreshToken');
-          
-          console.log('LocalStorage after error logout:', {
-            accounts: localStorage.getItem('angular-18-signup-verification-boilerplate-accounts'),
-            currentUser: localStorage.getItem('currentUser'),
-            refreshToken: localStorage.getItem('refreshToken')
-          });
-
-          this.router.navigate(["/account/login"]);
-        }
-      });
+          this.router.navigate(['/account/login']);
+        })
+      );
   }
 
   /**
@@ -247,18 +222,47 @@ export class AccountService {
   private startRefreshTokenTimer() {
     if (!this.accountValue?.jwtToken) return;
     
-    const jwtToken = JSON.parse(atob(this.accountValue.jwtToken.split(".")[1]));
-    const expires = new Date(jwtToken.exp * 1000);
-    const timeout = expires.getTime() - Date.now() - 60 * 1000;
-    this.refreshTokenTimeout = setTimeout(() => {
-      this.refreshToken().subscribe();
-    }, timeout);
+    try {
+      // Parse the JWT token to get expiration time
+      const jwtToken = JSON.parse(atob(this.accountValue.jwtToken.split(".")[1]));
+      const expires = new Date(jwtToken.exp * 1000);
+      const now = new Date();
+      
+      // Calculate time to token expiration
+      const timeout = expires.getTime() - now.getTime() - (60 * 1000); // Refresh 1 minute before expiry
+      
+      // Log token expiration time for debugging
+      console.log(`JWT token expires: ${expires.toLocaleString()}, Current time: ${now.toLocaleString()}`);
+      console.log(`Setting refresh timer for ${Math.floor(timeout / 1000)} seconds from now`);
+      
+      // Set minimum timeout to avoid immediate refresh
+      const refreshTimeout = Math.max(1000, timeout);
+      
+      // Clear any existing timeout
+      this.stopRefreshTokenTimer();
+      
+      // Set the refresh timer
+      this.refreshTokenTimeout = setTimeout(() => {
+        console.log('Token refresh timer triggered');
+        this.refreshToken().subscribe({
+          error: error => {
+            console.error('Failed to refresh token:', error);
+            // Don't logout on refresh failure - ErrorInterceptor will handle this
+          }
+        });
+      }, refreshTimeout);
+    } catch (error) {
+      console.error('Error parsing JWT token:', error);
+    }
   }
 
   /**
    * Stop the refresh token timer
    */
   private stopRefreshTokenTimer() {
-    clearTimeout(this.refreshTokenTimeout);
+    if (this.refreshTokenTimeout) {
+      clearTimeout(this.refreshTokenTimeout);
+      this.refreshTokenTimeout = null;
+    }
   }
 }

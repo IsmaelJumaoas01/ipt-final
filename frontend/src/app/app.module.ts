@@ -3,6 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS, HttpInterceptor } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 
 import { AppRoutingModule } from './app-routing.module';
 import { JwtInterceptor, ErrorInterceptor, appInitializer } from './_helpers';
@@ -15,6 +16,7 @@ import { AppComponent } from './app.component';
 import { AlertComponent } from './_components';
 import { HomeComponent } from './home';
 import { UsersComponent } from './users/users.component';
+import { AdminModule } from './admin/admin.module';
 
 // Create providers array that conditionally includes the fake backend
 const providers: any[] = [
@@ -39,6 +41,8 @@ if (environment.useFakeBackend) {
     CommonModule,
     ReactiveFormsModule,
     HttpClientModule,
+    RouterModule,
+    AdminModule,
     AppRoutingModule
   ],
   declarations: [

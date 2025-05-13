@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { EmployeesRoutingModule } from './employees-routing.module';
 import { ListComponent } from './list.component';
 import { AddEditComponent } from './add-edit.component';
+import { TransferComponent } from './transfer.component';
 
 @NgModule({
     imports: [
@@ -15,7 +16,8 @@ import { AddEditComponent } from './add-edit.component';
     ],
     declarations: [
         ListComponent,
-        AddEditComponent
+        AddEditComponent,
+        TransferComponent
     ]
 })
 export class EmployeesModule { } 

@@ -13,28 +13,68 @@ router.post('/:id/transfer', authorize(Role.Admin), transfer);
 
 async function create(req, res, next) {
     try {
+        // Validate required fields
+        const { employeeId, userId, position, departmentId, hireDate, status } = req.body;
+        
+        if (!employeeId || !userId || !position || !departmentId || !hireDate || !status) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        // Check if employeeId already exists
+        const existingEmployee = await db.Employee.findOne({ where: { employeeId } });
+        if (existingEmployee) {
+            return res.status(400).json({ message: 'Employee ID already exists' });
+        }
+
+        // Check if user exists
+        const user = await db.Account.findByPk(userId);
+        if (!user) {
+            return res.status(400).json({ message: 'User not found' });
+        }
+
+        // Check if department exists
+        const department = await db.Department.findByPk(departmentId);
+        if (!department) {
+            return res.status(400).json({ message: 'Department not found' });
+        }
+
         const employee = await db.Employee.create(req.body);
         res.status(201).json(employee);
-    } catch (err) { next(err); }
+    } catch (err) { 
+        console.error('Employee creation error:', err);
+        res.status(500).json({ message: err.message || 'An error occurred while creating the employee' });
+    }
 }
 
 async function getAll(req, res, next) {
     try {
         const employees = await db.Employee.findAll({
-            include: [{ model: db.User }, { model: db.Department }]
+            include: [
+                { model: db.Account, as: 'user' },
+                { model: db.Department }
+            ]
         });
         res.json(employees);
-    } catch (err) { next(err); }
+    } catch (err) { 
+        console.error('Error fetching employees:', err);
+        res.status(500).json({ message: 'Error fetching employees' });
+    }
 }
 
 async function getById(req, res, next) {
     try {
         const employee = await db.Employee.findByPk(req.params.id, {
-            include: [{ model: db.User }, { model: db.Department }]
+            include: [
+                { model: db.Account, as: 'user' },
+                { model: db.Department }
+            ]
         });
         if (!employee) throw new Error('Employee not found');
         res.json(employee);
-    } catch (err) { next(err); }
+    } catch (err) { 
+        console.error('Error fetching employee:', err);
+        res.status(500).json({ message: 'Error fetching employee' });
+    }
 }
 
 async function update(req, res, next) {

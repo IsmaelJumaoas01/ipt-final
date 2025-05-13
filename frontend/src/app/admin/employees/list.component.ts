@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { EmployeeService } from '../../_services/employee.service';
 import { AccountService } from '../../_services/account.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { AlertService } from '../../_services/alert.service';
 
 @Component({
   selector: 'app-employee-list',
@@ -9,15 +10,57 @@ import { Router } from '@angular/router';
 })
 export class ListComponent implements OnInit {
   employees: any[] = [];
+  loading = false;
+  errorMessage: string = '';
+  showTransferModal = false;
+  employeeToTransfer: any = null;
 
   constructor(
     private employeeService: EmployeeService,
     private accountService: AccountService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private alertService: AlertService
   ) {}
 
   ngOnInit() {
-    this.employeeService.getAll().subscribe(data => this.employees = data);
+    this.loadEmployees();
+    
+    // Check if we're on a transfer route
+    this.route.params.subscribe(params => {
+      if (params['id']) {
+        const employeeId = +params['id'];
+        // If we're on the transfer route, show the transfer modal
+        if (this.router.url.includes('/transfer/')) {
+          this.employeeService.getById(employeeId).subscribe({
+            next: (employee) => {
+              this.employeeToTransfer = employee;
+              this.showTransferModal = true;
+            },
+            error: (error) => {
+              this.alertService.error('Error loading employee');
+              this.router.navigate(['/employees']);
+            }
+          });
+        }
+      }
+    });
+  }
+
+  loadEmployees() {
+    this.loading = true;
+    this.errorMessage = '';
+    this.employeeService.getAll().subscribe({
+      next: (data) => {
+        this.employees = data;
+        this.loading = false;
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'Error loading employees';
+        this.alertService.error(error);
+        this.loading = false;
+      }
+    });
   }
 
   account() {
@@ -32,8 +75,23 @@ export class ListComponent implements OnInit {
     this.router.navigate(['/workflows'], { queryParams: { employeeId } });
   }
 
-  transfer(employee: any) {
-    // Implement transfer logic or navigation
+  transfer(employeeId: number) {
+    // Navigate to transfer route which will trigger the modal
+    this.router.navigate(['/employees/transfer', employeeId]);
+  }
+
+  onTransferClosed(success: boolean) {
+    this.showTransferModal = false;
+    this.employeeToTransfer = null;
+    
+    // Navigate back to the list
+    this.router.navigate(['/employees']);
+    
+    // If transfer was successful, reload employees and show message
+    if (success) {
+      this.loadEmployees();
+      this.alertService.success('Employee transferred successfully');
+    }
   }
 
   edit(employeeId: number) {
@@ -41,9 +99,17 @@ export class ListComponent implements OnInit {
   }
 
   delete(employeeId: number) {
-    this.employeeService.delete(employeeId).subscribe(() => {
-      this.employees = this.employees.filter(e => e.id !== employeeId);
-    });
+    if (confirm('Are you sure you want to delete this employee?')) {
+      this.employeeService.delete(employeeId).subscribe({
+        next: () => {
+          this.employees = this.employees.filter(e => e.id !== employeeId);
+          this.alertService.success('Employee deleted successfully');
+        },
+        error: (error) => {
+          this.alertService.error(error);
+        }
+      });
+    }
   }
 
   add() {

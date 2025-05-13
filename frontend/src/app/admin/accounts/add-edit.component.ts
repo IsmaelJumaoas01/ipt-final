@@ -14,6 +14,7 @@ export class AddEditComponent implements OnInit {
     isAddMode: boolean;
     loading = false;
     submitted = false;
+    errorMessage: string = '';
 
     constructor(
         private formBuilder: UntypedFormBuilder,
@@ -22,14 +23,15 @@ export class AddEditComponent implements OnInit {
         private accountService: AccountService,
         private alertService: AlertService
     ) {}
+
     ngOnInit() {
         this.id = this.route.snapshot.params['id'];
         this.isAddMode = !this.id;
     
         this.form = this.formBuilder.group({
             title: ['', Validators.required],
-            firstName: ['', Validators.required],
-            lastName: ['', Validators.required],
+            firstName: ['', [Validators.required, Validators.minLength(2)]],
+            lastName: ['', [Validators.required, Validators.minLength(2)]],
             email: ['', [Validators.required, Validators.email]],
             role: ['', Validators.required],
             status: ['Active', Validators.required],
@@ -42,20 +44,25 @@ export class AddEditComponent implements OnInit {
         if (!this.isAddMode) {
             this.accountService.getById(this.id)
                 .pipe(first())
-                .subscribe(x => {
+                .subscribe({
+                    next: x => {
                     if (!x.status) x.status = 'Active';
                     this.form.patchValue(x);
+                    },
+                    error: error => {
+                        this.errorMessage = error.error?.message || 'Error loading account';
+                        this.alertService.error(error);
+                    }
                 });
         }
     }
     
     get f() { return this.form.controls; }
+
     onSubmit() {
         this.submitted = true;
-    
-   
+        this.errorMessage = '';
         this.alertService.clear();
-    
     
         if (this.form.invalid) {
             return;
@@ -78,6 +85,7 @@ export class AddEditComponent implements OnInit {
                     this.router.navigate(['../'], { relativeTo: this.route });
                 },
                 error: error => {
+                    this.errorMessage = error.error?.message || 'An error occurred while creating the account';
                     this.alertService.error(error);
                     this.loading = false;
                 }
@@ -93,6 +101,7 @@ export class AddEditComponent implements OnInit {
                     this.router.navigate(['../'], { relativeTo: this.route });
                 },
                 error: error => {
+                    this.errorMessage = error.error?.message || 'An error occurred while updating the account';
                     this.alertService.error(error);
                     this.loading = false;
                 }

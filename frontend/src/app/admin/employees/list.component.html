@@ -1,6 +1,7 @@
 <div class="card">
   <div class="card-header">Employees</div>
   <div class="card-body">
+    <div class="alert alert-danger" *ngIf="errorMessage">{{errorMessage}}</div>
     <div class="table-responsive">
       <table class="table table-striped">
         <thead>
@@ -24,12 +25,14 @@
               <span *ngIf="employee.status !== 'Active'" class="badge bg-danger">{{employee.status}}</span>
             </td>
             <td style="white-space: nowrap">
+              <button class="btn btn-sm btn-info me-1" (click)="viewRequests(employee.id)">Requests</button>
+              <button class="btn btn-sm btn-info me-1" (click)="viewWorkflows(employee.id)">Workflows</button>
+              <button (click)="transfer(employee.id)" class="btn btn-sm btn-warning me-1">Transfer</button>
               <a routerLink="edit/{{employee.id}}" class="btn btn-sm btn-primary me-1">Edit</a>
-              <button (click)="deleteEmployee(employee.id)" class="btn btn-sm btn-danger btn-delete-employee" [disabled]="employee.isDeleting">
+              <button (click)="delete(employee.id)" class="btn btn-sm btn-danger btn-delete-employee" [disabled]="employee.isDeleting">
                 <span *ngIf="employee.isDeleting" class="spinner-border spinner-border-sm"></span>
                 <span *ngIf="!employee.isDeleting">Delete</span>
               </button>
-              <button (click)="transferEmployee(employee.id)" class="btn btn-sm btn-info ms-1">Transfer</button>
             </td>
           </tr>
           <tr *ngIf="!employees?.length">
@@ -43,4 +46,11 @@
     </div>
     <button class="btn btn-primary float-end" routerLink="add">Add Employee</button>
   </div>
-</div> 
+</div>
+
+<!-- Transfer Employee Modal -->
+<app-employee-transfer 
+  *ngIf="showTransferModal" 
+  [employee]="employeeToTransfer" 
+  (closed)="onTransferClosed($event)">
+</app-employee-transfer> 

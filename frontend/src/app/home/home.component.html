@@ -1,6 +1,40 @@
 <div class="p-4">
     <div class="container">
-      <h1>Hi {{ account.firstName }}!</h1>
-      <p>You're logged in with Angular 10 & JWT</p>
+        <h1>Welcome to Employee Management System</h1>
+        <p>You are logged in as: <strong>{{account?.firstName}} {{account?.lastName}}</strong> ({{account?.role}})</p>
+        
+        <div class="row mt-4">
+            <!-- Admin Quick Links -->
+            <div class="col-md-6 mb-4" *ngIf="account?.role === 'Admin'">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Admin Quick Links</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a routerLink="/admin" class="list-group-item list-group-item-action">Dashboard</a>
+                            <a routerLink="/employees" class="list-group-item list-group-item-action">Manage Employees</a>
+                            <a routerLink="/departments" class="list-group-item list-group-item-action">Manage Departments</a>
+                            <a routerLink="/requests" class="list-group-item list-group-item-action">View Requests</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Quick Links -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>User Options</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a routerLink="/requests" class="list-group-item list-group-item-action">My Requests</a>
+                            <a routerLink="/profile" class="list-group-item list-group-item-action">My Profile</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+</div>

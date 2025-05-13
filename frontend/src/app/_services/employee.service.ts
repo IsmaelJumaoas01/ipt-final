@@ -4,34 +4,34 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment';
 
+const baseUrl = `${environment.apiUrl}/employees`;
+
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
-    private apiUrl = `${environment.apiUrl}/employees`;
-
     constructor(private http: HttpClient) { }
 
     getAll(): Observable<any[]> {
-        return this.http.get<any[]>(this.apiUrl);
+        return this.http.get<any[]>(baseUrl);
     }
 
     getById(id: number): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}/${id}`);
+        return this.http.get<any>(`${baseUrl}/${id}`);
     }
 
-    create(employee: any): Observable<any> {
-        return this.http.post<any>(this.apiUrl, employee);
+    create(params: any): Observable<any> {
+        return this.http.post(baseUrl, params);
     }
 
-    update(id: number, employee: any): Observable<any> {
-        return this.http.put<any>(`${this.apiUrl}/${id}`, employee);
+    update(id: number, params: any): Observable<any> {
+        return this.http.put(`${baseUrl}/${id}`, params);
     }
 
     delete(id: number): Observable<any> {
-        return this.http.delete<any>(`${this.apiUrl}/${id}`);
+        return this.http.delete(`${baseUrl}/${id}`);
     }
 
     transfer(id: number, departmentId: number): Observable<any> {
-        return this.http.post<any>(`${this.apiUrl}/${id}/transfer`, { departmentId });
+        return this.http.post(`${baseUrl}/${id}/transfer`, { departmentId });
     }
 
     getUsers(): Observable<any[]> {

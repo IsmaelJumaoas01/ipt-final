@@ -7,17 +7,16 @@
     <form (ngSubmit)="onSubmit()">
       <div class="form-group mb-3">
         <label for="type">Request Type</label>
-        <select class="form-select" [(ngModel)]="request.type" name="type">
-          <option value="leave">Leave Request</option>
-          <option value="expense">Expense Request</option>
-          <option value="transfer">Transfer Request</option>
+        <select class="form-select" [(ngModel)]="request.type" name="type" id="type" autocomplete="off">
+          <option *ngFor="let type of requestTypes" [value]="type.value">{{type.label}}</option>
         </select>
       </div>
       <div class="form-group mb-3">
         <label for="employeeId">Employee</label>
-        <select class="form-select" [(ngModel)]="request.employeeId" name="employeeId" [disabled]="!!id">
-          <option *ngFor="let employee of employees" [value]="employee.id">
-            {{employee.employeeId}} - {{employee.user?.firstName}} {{employee.user?.lastName}}
+        <select class="form-select" [(ngModel)]="request.employeeId" name="employeeId" id="employeeId" [disabled]="!!id" autocomplete="off">
+          <option [ngValue]="null">Select Employee</option>
+          <option *ngFor="let employee of employees" [ngValue]="employee.id">
+            {{employee.employeeId}} - {{employee.user?.firstName || employee.firstName}} {{employee.user?.lastName || employee.lastName}}
           </option>
         </select>
       </div>
@@ -25,10 +24,20 @@
         <label>Items</label>
         <div *ngFor="let item of request.items; let i = index" class="row mb-2 align-items-center">
           <div class="col-md-6">
-            <input type="text" class="form-control" placeholder="Name" [(ngModel)]="item.name" name="itemName{{i}}">
+            <input type="text" class="form-control" placeholder="Item Name" [(ngModel)]="item.name" 
+              name="itemName{{i}}" autocomplete="off" list="item-suggestions">
+            <datalist id="item-suggestions">
+              <option value="Laptop"></option>
+              <option value="Monitor"></option>
+              <option value="Office Supplies"></option>
+              <option value="Business Trip"></option>
+              <option value="Conference Fee"></option>
+              <option value="Software License"></option>
+            </datalist>
           </div>
           <div class="col-md-3">
-            <input type="number" class="form-control" placeholder="Quantity" [(ngModel)]="item.quantity" name="itemQuantity{{i}}" min="1">
+            <input type="number" class="form-control" placeholder="Quantity" [(ngModel)]="item.quantity" 
+              name="itemQuantity{{i}}" min="1" autocomplete="off">
           </div>
           <div class="col-md-3">
             <button type="button" class="btn btn-danger" (click)="removeItem(i)">Remove</button>

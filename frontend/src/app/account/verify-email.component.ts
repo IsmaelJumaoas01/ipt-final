@@ -22,19 +22,35 @@ export class VerifyEmailComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    // Get token from query params
     const token = this.route.snapshot.queryParams['token'];
+    
+    console.log('VerifyEmailComponent: Verification token received:', token);
+    console.log('VerifyEmailComponent: Current route:', this.router.url);
+    
+    // If no token provided, show error
+    if (!token) {
+      console.error('VerifyEmailComponent: No token provided for verification');
+      this.emailStatus = EmailStatus.Failed;
+      return;
+    }
 
-
-    this.router.navigate([], { relativeTo: this.route, replaceUrl: true });
-
+    // Verify email with the token
     this.accountService.verifyEmail(token)
       .pipe(first())
       .subscribe({
-        next: () => {
+        next: (response) => {
+          console.log('VerifyEmailComponent: Verification successful:', response);
           this.alertService.success('Verification successful, you can now login', { keepAfterRouteChange: true });
-          this.router.navigate(['../login'], { relativeTo: this.route });
+          setTimeout(() => {
+            // Delay redirect slightly to ensure user sees the success message
+            console.log('VerifyEmailComponent: Redirecting to login page after successful verification');
+            // Use absolute path navigation to avoid any route issues
+            this.router.navigate(['/account/login'], { replaceUrl: true });
+          }, 1500);
         },
-        error: () => {
+        error: (error) => {
+          console.error('VerifyEmailComponent: Verification failed:', error);
           this.emailStatus = EmailStatus.Failed;
         }
       });

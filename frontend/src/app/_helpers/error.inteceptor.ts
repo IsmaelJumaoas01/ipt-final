@@ -11,14 +11,14 @@ export class ErrorInterceptor implements HttpInterceptor {
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(request).pipe(catchError(err => {
-            if ([401, 403].includes(err.status) && this. accountService.accountValue) {
-                
-                this.accountService.logout();
+            if ([401, 403].includes(err.status) && this.accountService.accountValue) {
+                // Auto logout if 401 or 403 response returned from api
+                this.accountService.logout().subscribe();
             }
 
-            const error = (err && err.error && err.error.message) || err. statusText;
+            const error = (err && err.error && err.error.message) || err.statusText;
             console.error(err);
-            return throwError(error);
-        }))
+            return throwError(() => error);
+        }));
     }
 }

@@ -127,6 +127,48 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         lastName: 'User',
         position: 'Manager'
       }
+    },
+    { 
+      id: 2, 
+      employeeId: 1, 
+      type: 'Training', 
+      details: { task: 'Complete security training', date: new Date().toISOString() }, 
+      status: 'Completed',
+      employee: { 
+        id: 1, 
+        employeeId: 'EMP001', 
+        firstName: 'Admin', 
+        lastName: 'User',
+        position: 'Manager'
+      }
+    },
+    { 
+      id: 3, 
+      employeeId: 2, 
+      type: 'Performance Review', 
+      details: { task: 'Quarterly performance review', date: new Date().toISOString() }, 
+      status: 'Pending',
+      employee: { 
+        id: 2, 
+        employeeId: 'EMP002', 
+        firstName: 'Normal', 
+        lastName: 'User',
+        position: 'Developer'
+      }
+    },
+    { 
+      id: 4, 
+      employeeId: 2, 
+      type: 'Onboarding', 
+      details: { task: 'Complete HR paperwork', date: new Date().toISOString() }, 
+      status: 'Completed',
+      employee: { 
+        id: 2, 
+        employeeId: 'EMP002', 
+        firstName: 'Normal', 
+        lastName: 'User',
+        position: 'Developer'
+      }
     }
   ];
 
@@ -208,6 +250,8 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             
           case url.endsWith('/workflows') && method === 'GET':
             return getWorkflows();
+          case url.match(/\/workflows\/employee\/\d+$/) && method === 'GET':
+            return getWorkflowsByEmployeeId();
           case url.match(/\/workflows\/\d+$/) && method === 'GET':
             return getWorkflowById();
           case url.endsWith('/workflows') && method === 'POST':
@@ -216,6 +260,8 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             return updateWorkflow();
           case url.match(/\/workflows\/\d+$/) && method === 'DELETE':
             return deleteWorkflow();
+          case url.match(/\/workflows\/\d+\/status$/) && method === 'PUT':
+            return updateWorkflowStatus();
             
           case url.match(/\/employees\/\d+\/transfer$/) && method === 'POST':
             return transferEmployee();
@@ -469,6 +515,44 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       if (!isAuthenticated() || !isAuthorized(Role.Admin)) return unauthorized();
       const employee = body;
       employee.id = self.employees.length ? Math.max(...self.employees.map(x => x.id)) + 1 : 1;
+      
+      // Link with account if userId/accountId is provided
+      if (employee.userId || employee.accountId) {
+        const accountId = Number(employee.userId || employee.accountId);
+        const account = accounts.find(a => a.id === accountId);
+        
+        if (account) {
+          // Set user data from account
+          employee.user = {
+            id: account.id,
+            firstName: account.firstName,
+            lastName: account.lastName,
+            email: account.email
+          };
+        }
+      }
+      
+      // Add department information
+      if (employee.departmentId) {
+        const deptId = Number(employee.departmentId);
+        const department = self.departments.find(d => d.id === deptId);
+        
+        if (department) {
+          employee.department = {
+            id: department.id,
+            name: department.name,
+            description: department.description
+          };
+          
+          // Increment department employee count
+          const deptIndex = self.departments.findIndex(d => d.id === deptId);
+          if (deptIndex !== -1) {
+            self.departments[deptIndex].employeeCount++;
+          }
+        }
+      }
+      
+      console.log('Created employee:', employee);
       self.employees.push(employee);
       return ok(employee);
     }
@@ -477,7 +561,45 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       if (!isAuthenticated() || !isAuthorized(Role.Admin)) return unauthorized();
       const employeeIndex = self.employees.findIndex(x => x.id === idFromUrl());
       if (employeeIndex === -1) return error('Employee not found');
-      Object.assign(self.employees[employeeIndex], body);
+      
+      const updatedEmployee = body;
+      const currentEmployee = self.employees[employeeIndex];
+      
+      // Check if department is changing
+      if (updatedEmployee.departmentId && Number(updatedEmployee.departmentId) !== Number(currentEmployee.departmentId)) {
+        const oldDeptId = Number(currentEmployee.departmentId);
+        const newDeptId = Number(updatedEmployee.departmentId);
+        
+        // Decrement old department count
+        const oldDeptIndex = self.departments.findIndex(d => d.id === oldDeptId);
+        if (oldDeptIndex !== -1) {
+          self.departments[oldDeptIndex].employeeCount = Math.max(0, self.departments[oldDeptIndex].employeeCount - 1);
+        }
+        
+        // Increment new department count
+        const newDeptIndex = self.departments.findIndex(d => d.id === newDeptId);
+        if (newDeptIndex !== -1) {
+          self.departments[newDeptIndex].employeeCount++;
+          
+          // Update department reference
+          updatedEmployee.department = {
+            id: self.departments[newDeptIndex].id,
+            name: self.departments[newDeptIndex].name,
+            description: self.departments[newDeptIndex].description
+          };
+        }
+      } else if (!updatedEmployee.department && currentEmployee.department) {
+        // Keep the current department reference if not provided in update
+        updatedEmployee.department = currentEmployee.department;
+      }
+      
+      // Preserve user info if not provided
+      if (!updatedEmployee.user && currentEmployee.user) {
+        updatedEmployee.user = currentEmployee.user;
+      }
+      
+      // Update the employee
+      Object.assign(self.employees[employeeIndex], updatedEmployee);
       return ok(self.employees[employeeIndex]);
     }
 
@@ -564,8 +686,8 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             request.employee = {
               id: employee.id,
               employeeId: employee.employeeId,
-              firstName: employee.firstName || (employee.user && employee.user.firstName),
-              lastName: employee.lastName || (employee.user && employee.user.lastName),
+              firstName: employee.user?.firstName || employee.firstName,
+              lastName: employee.user?.lastName || employee.lastName,
               position: employee.position
             };
           }
@@ -714,6 +836,13 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       return ok(self.workflows);
     }
 
+    function getWorkflowsByEmployeeId() {
+      if (!isAuthenticated()) return unauthorized();
+      const employeeId = idFromUrl();
+      const workflows = self.workflows.filter(w => w.employeeId === employeeId);
+      return ok(workflows);
+    }
+
     function getWorkflowById() {
       if (!isAuthenticated()) return unauthorized();
       const workflow = self.workflows.find(x => x.id === idFromUrl());
@@ -742,6 +871,15 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       return ok();
     }
 
+    function updateWorkflowStatus() {
+      if (!isAuthenticated() || !isAuthorized(Role.Admin)) return unauthorized();
+      const workflowId = idFromUrl();
+      const workflow = self.workflows.find(w => w.id === workflowId);
+      if (!workflow) return error('Workflow not found');
+      Object.assign(workflow, body);
+      return ok(workflow);
+    }
+
     // Add this function to handle employee transfers
     function transferEmployee() {
       if (!isAuthenticated()) return unauthorized();
@@ -749,24 +887,26 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       const id = idFromUrl();
       const { departmentId } = body;
       
-      console.log('Transfer employee request:', { id, departmentId, body });
+      console.log('Transfer employee request:', { id, departmentId, body, url });
       
       // Ensure IDs are numbers
       const employeeId = Number(id);
       const deptId = Number(departmentId);
       
+      console.log('Parsed IDs:', { employeeId, deptId });
+      
       // Find the employee - use findIndex to get the position
       const employeeIndex = self.employees.findIndex(e => Number(e.id) === employeeId);
       
       if (employeeIndex === -1) {
-        console.error(`Employee not found with ID: ${employeeId}. Available employees:`, self.employees);
+        console.error(`Employee not found with ID: ${employeeId}. Available employees:`, self.employees.map(e => ({ id: e.id, name: e.firstName + ' ' + e.lastName })));
         return error('Employee not found');
       }
       
       // Find the department
       const department = self.departments.find(d => Number(d.id) === deptId);
       if (!department) {
-        console.error(`Department not found with ID: ${deptId}. Available departments:`, self.departments);
+        console.error(`Department not found with ID: ${deptId}. Available departments:`, self.departments.map(d => ({ id: d.id, name: d.name })));
         return error('Department not found');
       }
       
@@ -855,6 +995,23 @@ export class FakeBackendInterceptor implements HttpInterceptor {
 
     function idFromUrl() {
       const urlParts = url.split('/');
+      
+      // Special case for URLs like /employees/1/transfer
+      if (urlParts.length >= 4 && urlParts[urlParts.length - 1] === 'transfer') {
+        return parseInt(urlParts[urlParts.length - 2]);
+      }
+      
+      // Special case for URLs like /workflows/employee/1
+      if (urlParts.length >= 4 && urlParts[urlParts.length - 2] === 'employee') {
+        return parseInt(urlParts[urlParts.length - 1]);
+      }
+      
+      // Special case for URLs like /workflows/1/status
+      if (urlParts.length >= 4 && urlParts[urlParts.length - 1] === 'status') {
+        return parseInt(urlParts[urlParts.length - 2]);
+      }
+      
+      // Default case for regular URLs like /employees/1
       return parseInt(urlParts[urlParts.length - 1]);
     }
 

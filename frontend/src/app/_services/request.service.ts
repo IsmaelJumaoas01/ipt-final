@@ -18,6 +18,14 @@ export class RequestService {
         return this.http.get<any>(`${this.apiUrl}/${id}`);
     }
 
+    getByEmployeeId(employeeId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/employee/${employeeId}`);
+    }
+
+    getMyRequests(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/my-requests`);
+    }
+
     create(request: any): Observable<any> {
         return this.http.post<any>(this.apiUrl, request);
     }

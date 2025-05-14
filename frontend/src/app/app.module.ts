@@ -42,8 +42,8 @@ if (environment.useFakeBackend) {
     ReactiveFormsModule,
     HttpClientModule,
     RouterModule,
-    AdminModule,
-    AppRoutingModule
+    AppRoutingModule,
+    AdminModule
   ],
   declarations: [
     AppComponent,

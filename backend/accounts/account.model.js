@@ -38,7 +38,11 @@ function model(sequelize) {
         },
         isVerified: {
             type: DataTypes.VIRTUAL,
-            get() { return !!(this.verified || this.passwordReset); }
+            get() { 
+                const isVerified = !!(this.verified || this.passwordReset);
+                console.log(`isVerified getter called for ${this.email}: verified=${!!this.verified}, passwordReset=${!!this.passwordReset}, result=${isVerified}`);
+                return isVerified;
+            }
         }
     };
 
@@ -49,6 +53,14 @@ function model(sequelize) {
         },
         scopes: {
             withHash: { attributes: {}, }
+        },
+        hooks: {
+            beforeSave: (account) => {
+                // Log verification status changes
+                if (account.changed('verified')) {
+                    console.log(`Account ${account.email} verification status changed: ${account.verified}`);
+                }
+            }
         }
     };
 

@@ -17,9 +17,18 @@
         <tbody>
           <tr *ngFor="let employee of employees">
             <td>{{employee.employeeId}}</td>
-            <td>{{employee.user?.firstName}} {{employee.user?.lastName}}</td>
+            <td>
+              <!-- Show name from user object if available, otherwise from direct properties -->
+              <span *ngIf="employee.user">{{employee.user.firstName}} {{employee.user.lastName}}</span>
+              <span *ngIf="!employee.user && (employee.firstName || employee.lastName)">
+                {{employee.firstName}} {{employee.lastName}}
+              </span>
+              <span *ngIf="!employee.user && !employee.firstName && !employee.lastName">
+                Unknown User
+              </span>
+            </td>
             <td>{{employee.position}}</td>
-            <td>{{employee.department?.name}}</td>
+            <td>{{employee.department?.name || 'Unknown'}}</td>
             <td>
               <span *ngIf="employee.status === 'Active'" class="badge bg-success">Active</span>
               <span *ngIf="employee.status !== 'Active'" class="badge bg-danger">{{employee.status}}</span>

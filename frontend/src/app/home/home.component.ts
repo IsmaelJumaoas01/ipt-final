@@ -1,10 +1,111 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
-import { AccountService } from '@app/_services';
+import { AccountService } from '../_services';
+import { EmployeeService } from '../_services/employee.service';
+import { RequestService } from '../_services/request.service';
+import { DepartmentService } from '../_services/department.service';
 
 @Component({ templateUrl: 'home.component.html' })
-export class HomeComponent {
-    account = this.accountService.accountValue;
+export class HomeComponent implements OnInit {
+    account: any;
+    statistics: any = {};
+    employeeInfo: any = null;
+    requests: any[] = [];
+    loading = false;
 
-    constructor(private accountService: AccountService) { }
+    constructor(
+        public accountService: AccountService,
+        private employeeService: EmployeeService,
+        private requestService: RequestService,
+        private departmentService: DepartmentService,
+        private router: Router
+    ) {
+        this.account = this.accountService.accountValue;
+    }
+    
+    ngOnInit() {
+        // Now handle the case where the user is not logged in
+        // Instead of redirecting, we'll show the guest dashboard
+        if (!this.account) {
+            console.log('Not logged in, displaying guest dashboard');
+            this.loading = false;
+            return;
+        }
+
+        this.loading = true;
+
+        // Load appropriate data based on user role
+        if (this.account?.role === 'Admin') {
+            this.loadAdminDashboard();
+        } else {
+            this.loadUserDashboard();
+        }
+    }
+
+    // Navigate to login page
+    goToLogin() {
+        this.router.navigate(['/account/login']);
+    }
+    
+    // Navigate to register page
+    goToRegister() {
+        this.router.navigate(['/account/register']);
+    }
+
+    private loadAdminDashboard() {
+        forkJoin({
+            employees: this.employeeService.getAll().pipe(catchError(() => of([]))),
+            departments: this.departmentService.getAll().pipe(catchError(() => of([]))),
+            requests: this.requestService.getAll().pipe(catchError(() => of([])))
+        }).subscribe(results => {
+            this.statistics = {
+                employeeCount: results.employees.length,
+                departmentCount: results.departments.length,
+                pendingRequestCount: results.requests.filter(r => r.status === 'Pending').length
+            };
+            this.loading = false;
+        });
+    }
+
+    private loadUserDashboard() {
+        // Find employee record for current user
+        this.employeeService.getAll().pipe(
+            catchError(() => of([]))
+        ).subscribe(employees => {
+            // Find the employee record that matches the current user's ID
+            const userEmployee = employees.find(e => e.userId === this.account.id);
+            
+            if (userEmployee) {
+                this.employeeInfo = userEmployee;
+                
+                // Get department details
+                this.departmentService.getById(userEmployee.departmentId).pipe(
+                    catchError(() => of(null))
+                ).subscribe(department => {
+                    if (department) {
+                        this.employeeInfo.department = department;
+                    }
+                });
+                
+                // Get user's requests
+                this.requestService.getAll().pipe(
+                    catchError(() => of([]))
+                ).subscribe(allRequests => {
+                    // Filter requests for this employee
+                    this.requests = allRequests
+                        .filter(r => r.employeeId === userEmployee.id)
+                        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+                        .slice(0, 5); // Show only the 5 most recent requests
+                    
+                    this.loading = false;
+                });
+            } else {
+                this.loading = false;
+            }
+        });
+    }
 }

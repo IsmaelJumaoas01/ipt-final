@@ -10,10 +10,7 @@
           <label class="form-label">Title</label>
           <select formControlName="title" class="form-select" [ngClass]="{ 'is-invalid': submitted && f['title'].errors }">
             <option value="">Select Title</option>
-            <option value="Mr">Mr</option>
-            <option value="Mrs">Mrs</option>
-            <option value="Miss">Miss</option>
-            <option value="Ms">Ms</option>
+            <option *ngFor="let title of titles" [value]="title">{{title}}</option>
           </select>
           <div *ngIf="submitted && f['title'].errors" class="invalid-feedback">
             <div *ngIf="f['title'].errors['required']">Title is required</div>

@@ -67,6 +67,7 @@
     <!-- User Navigation Row - Only show for normal users -->
     <div class="container mt-2 mb-3" *ngIf="account?.role === Role.User">
       <div class="d-flex justify-content-end gap-4 fw-bold" style="font-size: 1.1rem;">
+        <a routerLink="/profile" routerLinkActive="text-primary" class="text-dark text-decoration-none">My Profile</a>
         <a routerLink="/requests" routerLinkActive="text-primary" class="text-dark text-decoration-none">My Requests</a>
       </div>
     </div>

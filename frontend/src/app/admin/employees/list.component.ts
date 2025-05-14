@@ -53,6 +53,21 @@ export class ListComponent implements OnInit {
     this.employeeService.getAll().subscribe({
       next: (data) => {
         this.employees = data;
+        console.log('Loaded employees with departments:', this.employees);
+        
+        // Check if departments are loaded correctly
+        this.employees.forEach(employee => {
+          // If department is not properly attached, try to load it
+          if (!employee.department && employee.departmentId) {
+            this.employeeService.getDepartments().subscribe(departments => {
+              const department = departments.find(d => d.id === employee.departmentId);
+              if (department) {
+                employee.department = department;
+              }
+            });
+          }
+        });
+        
         this.loading = false;
       },
       error: (error) => {

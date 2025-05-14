@@ -12,6 +12,7 @@ export class LoginComponent implements OnInit {
   loading = false;
   submitted = false;
   error = '';
+  returnUrl: string = '/';
 
   constructor(
     private formBuilder: UntypedFormBuilder,
@@ -21,14 +22,33 @@ export class LoginComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    if (environment.useFakeBackend) {
-      this.router.navigateByUrl('/');
-      return;
+    // Clear any redirect flags that might be set
+    if (localStorage.getItem('redirectToLogin') !== 'true') {
+      // Only clear flags if we're directly accessing the login page
+      localStorage.removeItem('isAccountRoute');
+      localStorage.removeItem('accountRouteReload');
+      localStorage.removeItem('lastAccountRoute');
+    } else {
+      // Clear the redirect flag after use
+      localStorage.removeItem('redirectToLogin');
     }
+    
+    // Always set the account route flag for the login page
+    localStorage.setItem('isAccountRoute', 'true');
+    
+    // Initialize the form regardless of backend type
     this.form = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+    
+    // Get return url from route parameters or default to '/'
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+    
+    // If already logged in, redirect to home
+    if (this.accountService.accountValue) {
+      this.router.navigate(['/']);
+    }
   }
 
   get f() { return this.form.controls; }
@@ -46,8 +66,13 @@ export class LoginComponent implements OnInit {
       .pipe(first())
       .subscribe({
         next: () => {
-          // Always redirect to root route - admin dashboard for admins, home for others
-          this.router.navigateByUrl('/');
+          // Clear account route flags on successful login
+          localStorage.removeItem('isAccountRoute');
+          localStorage.removeItem('accountRouteReload');
+          localStorage.removeItem('lastAccountRoute');
+          
+          // Navigate to the return url
+          this.router.navigateByUrl(this.returnUrl);
         },
         error: error => {
           this.error = error;

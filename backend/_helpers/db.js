@@ -40,7 +40,12 @@ async function initialize() {
     db.Request.hasMany(db.RequestItem, { foreignKey: 'requestId' });
     db.RequestItem.belongsTo(db.Request, { foreignKey: 'requestId' });
 
-    db.Workflow.belongsTo(db.Employee, { foreignKey: 'employeeId' });
+    db.Workflow.belongsTo(db.Employee, { foreignKey: 'employeeId', as: 'employee' });
+    db.Employee.hasMany(db.Workflow, { foreignKey: 'employeeId', as: 'workflows' });
 
     await sequelize.sync({ alter: true });
+    
+    // Seed the database with default data if needed
+    const seedData = require('./seed-data');
+    await seedData.seedDatabase();
 }

@@ -20,11 +20,9 @@ import { OverviewComponent } from './overview.component';
         LayoutComponent,
         OverviewComponent
     ],
+    // Export only what's needed for internal admin routes, not globally
     exports: [
-        RouterModule,
-        LayoutComponent,
-        OverviewComponent,
-        SubnavComponent
+        AdminRoutingModule
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

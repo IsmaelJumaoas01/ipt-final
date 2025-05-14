@@ -24,11 +24,31 @@ module.exports = {
 };
 
 async function authenticate({ email, password, ipAddress }) {
+    console.log(`Authentication attempt for: ${email}`);
+    
     const account = await db.Account.scope('withHash').findOne({ where: { email } });
 
-    if (!account || !account.isVerified || !(await bcrypt.compare(password, account.passwordHash))) {
+    // Check if account exists
+    if (!account) {
+        console.log(`Authentication failed: No account found for ${email}`);
         throw 'Email or password is incorrect';
     }
+    
+    // Check if password is correct
+    const passwordValid = await bcrypt.compare(password, account.passwordHash);
+    if (!passwordValid) {
+        console.log(`Authentication failed: Invalid password for ${email}`);
+        throw 'Email or password is incorrect';
+    }
+    
+    // Check if account is verified
+    console.log(`Account verification status: ${account.verified ? 'Verified' : 'Not verified'}, Value: ${account.verified}`);
+    if (!account.verified) {
+        console.log(`Authentication failed: Account not verified for ${email}`);
+        throw 'Please verify your email before logging in';
+    }
+    
+    console.log(`Authentication successful for: ${email}`);
 
     // authentication successful so generate jwt and refresh tokens
     const jwtToken = generateJwtToken(account);
@@ -52,36 +72,65 @@ async function register(params, origin) {
         return await sendAlreadyRegisteredEmail(params.email, origin);
     }
 
+    // Check if any admin accounts exist
+    const adminCount = await db.Account.count({ where: { role: Role.Admin } });
+    
+    // For better logging
+    console.log(`Registering new account. Current admin count: ${adminCount}`);
+    
     // create account object
-    const account = new db.Account(params);
-
-    // first registered account is an admin
-    const isFirstAccount = (await db.Account.count()) === 0;
-    account.role = isFirstAccount ? Role.Admin : Role.User;
-    account.verificationToken = randomTokenString();
+    const account = new db.Account({
+        ...params,
+        role: adminCount === 0 ? Role.Admin : Role.User, // First account is admin if no admins exist
+        verificationToken: randomTokenString()
+    });
 
     // hash password
     account.passwordHash = await hash(params.password);
 
-    try {
-        // save account
-        await account.save();
-        
-        // send email
-        await sendVerificationEmail(account, origin);
-    } catch (error) {
-        console.error('Registration error:', error);
-        throw error;
-    }
+    // save account
+    await account.save();
+    
+    console.log(`Account registered with role: ${account.role}`);
+
+    // send verification email
+    await sendVerificationEmail(account, origin);
 }
 
 async function verifyEmail({ token }) {
+    console.log('Verifying email with token:', token);
+    
+    if (!token) {
+        throw 'Token is required';
+    }
+    
+    // Find the account with this verification token
     const account = await db.Account.findOne({ where: { verificationToken: token } });
-    if (!account) throw 'Verification failed';
-
-    account.verified = Date.now();
-    account.verificationToken = null;
-    await account.save();
+    
+    if (!account) {
+        console.error('Verification failed: Token not found in database');
+        throw 'Verification failed: Invalid token';
+    }
+    
+    console.log(`Found account for verification: ${account.email}, current verification status: ${account.verified ? 'Verified' : 'Not verified'}`);
+    
+    try {
+        // Set verified to current date and clear the token
+        account.verified = new Date();
+        account.verificationToken = null;
+        
+        // Save the changes to the database
+        await account.save();
+        
+        // Double-check that the account was saved properly
+        const updatedAccount = await db.Account.findByPk(account.id);
+        console.log(`Account verification status after save: ${updatedAccount.verified ? 'Verified' : 'Not verified'}`);
+        
+        return { message: 'Verification successful', email: account.email };
+    } catch (error) {
+        console.error('Error saving verified account:', error);
+        throw 'Verification failed: Database error';
+    }
 }
 
 // helper functions
@@ -167,7 +216,7 @@ async function validateResetToken({ token }) {
     const account = await db.Account.findOne({
       where: {
         resetToken: token,
-        resetTokenExpires: { [Op.gt]: Date.now() }
+        resetTokenExpires: { [Op.gt]: new Date() }
       }
     });
   
@@ -180,9 +229,12 @@ async function resetPassword({ token, password }) {
     const account = await validateResetToken({ token });
   
     account.passwordHash = await hash(password);
-    account.passwordReset = Date.now();
+    account.passwordReset = new Date();
     account.resetToken = null;
+    account.resetTokenExpires = null;
     await account.save();
+    
+    return { message: 'Password reset successful' };
 }
 
 async function getAll() {

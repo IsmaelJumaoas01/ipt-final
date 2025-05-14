@@ -25,4 +25,14 @@ import { ResetPasswordComponent } from './reset-password.component';
     ResetPasswordComponent
   ]
 })
-export class AccountModule { }
+export class AccountModule { 
+  constructor() {
+    // Set the account route flag when the module loads
+    localStorage.setItem('isAccountRoute', 'true');
+    
+    // Clean up any reload flags
+    localStorage.removeItem('accountRouteReload');
+    
+    console.log('AccountModule initialized, set isAccountRoute flag');
+  }
+}

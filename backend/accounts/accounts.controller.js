@@ -79,9 +79,17 @@ function verifyEmailSchema(req, res, next) {
 
 // Verifies user's email address using token
 function verifyEmail(req, res, next) {
+    console.log('Received verification request with token:', req.body.token);
+    
     accountService.verifyEmail(req.body)
-        .then(() => res.json({ message: 'Verification successful, you can now login' }))
-        .catch(next);
+        .then((result) => {
+            console.log('Verification successful:', result);
+            res.json({ message: 'Verification successful, you can now login' });
+        })
+        .catch((error) => {
+            console.error('Verification failed:', error);
+            next(error);
+        });
 }
 
 // Validates email format for password reset request

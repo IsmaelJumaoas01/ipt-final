@@ -48,57 +48,98 @@ export class AddEditComponent implements OnInit {
             // Load employee data
             this.employeeService.getById(this.id)
                 .pipe(first())
-                .subscribe(employee => {
-                    // Get the full account to ensure it's in the options list
-                    if (employee.userId) {
+                .subscribe({
+                    next: employee => {
+                        console.log('Loaded employee:', employee);
+                        
+                        // Format the hire date for the date input (YYYY-MM-DD)
+                        let hireDate = employee.hireDate;
+                        if (hireDate) {
+                            // If date is in timestamp format, convert to YYYY-MM-DD
+                            if (typeof hireDate === 'string' && hireDate.includes('T')) {
+                                hireDate = hireDate.split('T')[0];
+                            } else if (hireDate instanceof Date) {
+                                hireDate = hireDate.toISOString().split('T')[0];
+                            }
+                        }
+                        
                         // If we're in edit mode, ensure the account is in the dropdown list
-                        // even if it would normally be filtered out (e.g., inactive accounts)
-                        this.accountService.getById(employee.userId)
-                            .pipe(first())
-                            .subscribe(account => {
-                                // Add this account to the list if it's not already there
-                                if (!this.accounts.some(a => a.id === account.id)) {
-                                    this.accounts = [...this.accounts, account];
-                                }
-                                
-                                // Now patch the form values
-                                this.form.patchValue({
-                                    employeeId: employee.employeeId,
-                                    accountId: employee.userId,
-                                    position: employee.position,
-                                    departmentId: employee.departmentId,
-                                    hireDate: employee.hireDate,
-                                    status: employee.status
+                        if (employee.userId) {
+                            this.accountService.getById(employee.userId)
+                                .pipe(first())
+                                .subscribe({
+                                    next: account => {
+                                        // Add this account to the list if it's not already there
+                                        if (!this.accounts.some(a => a.id === account.id)) {
+                                            this.accounts = [...this.accounts, account];
+                                        }
+                                        
+                                        // Now patch the form values
+                                        this.form.patchValue({
+                                            employeeId: employee.employeeId,
+                                            accountId: employee.userId,
+                                            position: employee.position,
+                                            departmentId: employee.departmentId?.toString(),
+                                            hireDate: hireDate,
+                                            status: employee.status
+                                        });
+                                        
+                                        console.log('Form patched with account:', this.form.value);
+                                    },
+                                    error: error => {
+                                        this.errorMessage = error;
+                                        this.alertService.error('Error loading account details');
+                                    }
                                 });
+                        } else {
+                            // No account linked, just update the form
+                            this.form.patchValue({
+                                employeeId: employee.employeeId,
+                                position: employee.position,
+                                departmentId: employee.departmentId?.toString(),
+                                hireDate: hireDate,
+                                status: employee.status
                             });
-                    } else {
-                        // No account linked, just update the form
-                        this.form.patchValue({
-                            employeeId: employee.employeeId,
-                            position: employee.position,
-                            departmentId: employee.departmentId,
-                            hireDate: employee.hireDate,
-                            status: employee.status
-                        });
+                            
+                            console.log('Form patched without account:', this.form.value);
+                        }
+                    },
+                    error: error => {
+                        this.errorMessage = error;
+                        this.alertService.error('Error loading employee details');
                     }
                 });
         }
     }
 
     loadDepartments() {
-        this.employeeService.getDepartments().subscribe(departments => {
-            this.departments = departments;
+        this.employeeService.getDepartments().subscribe({
+            next: departments => {
+                this.departments = departments;
+                console.log('Loaded departments:', departments);
+            },
+            error: error => {
+                this.errorMessage = error;
+                this.alertService.error('Error loading departments');
+            }
         });
     }
 
     loadAccounts() {
         // Fetch all accounts for the Account dropdown
-        this.accountService.getAll().subscribe(accounts => {
-            // For new employees, show only active accounts
-            // For editing, we'll add the current account specifically
-            this.accounts = this.isEditMode 
-                ? accounts 
-                : accounts.filter(account => account.status === 'Active');
+        this.accountService.getAll().subscribe({
+            next: accounts => {
+                // For new employees, show only active accounts
+                // For editing, we'll add the current account specifically
+                this.accounts = this.isEditMode 
+                    ? accounts 
+                    : accounts.filter(account => account.status === 'Active');
+                console.log('Loaded accounts:', this.accounts);
+            },
+            error: error => {
+                this.errorMessage = error;
+                this.alertService.error('Error loading accounts');
+            }
         });
     }
 
@@ -121,6 +162,8 @@ export class AddEditComponent implements OnInit {
             ...this.form.value,
             userId: this.form.value.accountId
         };
+
+        console.log('Submitting employee data:', employee);
 
         if (this.id) {
             this.updateEmployee(employee);

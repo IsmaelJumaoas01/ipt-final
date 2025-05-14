@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 import { environment } from '../../environments/environment';
 import { AccountService } from '../_services';
@@ -21,12 +22,39 @@ export class JwtInterceptor implements HttpInterceptor {
       request.url.includes('/refresh-token') ||
       request.url.includes('/revoke-token');
     
+    // Log all API requests for debugging
+    console.log(`JWT Interceptor: Request to ${request.method} ${request.url}`);
+    console.log(`JWT Interceptor: Is logged in: ${isLoggedIn}, Is API URL: ${isApiUrl}, Is Auth Endpoint: ${isAuthEndpoint}`);
+    
     if (isLoggedIn && isApiUrl && !isAuthEndpoint) {
       // Clone the request with the auth header
       const token = account.jwtToken;
       
+      // Verify token exists and is not undefined
+      if (!token || token === 'undefined') {
+        console.error('JWT Interceptor: Invalid token. Forcing logout and re-login');
+        this.accountService.logout();
+        return next.handle(request);
+      }
+      
       // Log auth token being added for troubleshooting
-      console.log(`Adding auth token to request: ${request.url}`);
+      console.log(`JWT Interceptor: Adding auth token to request: ${request.url}`);
+      
+      try {
+        // Parse the JWT token to check expiration
+        const jwtToken = JSON.parse(atob(token.split(".")[1]));
+        const expires = new Date(jwtToken.exp * 1000);
+        const now = new Date();
+        
+        // Check if token is expired
+        if (expires < now) {
+          console.error(`JWT Interceptor: Token expired at ${expires.toLocaleString()}, current time is ${now.toLocaleString()}`);
+        } else {
+          console.log(`JWT Interceptor: Token valid until ${expires.toLocaleString()}`);
+        }
+      } catch (e) {
+        console.error('JWT Interceptor: Error parsing JWT token:', e);
+      }
       
       // Clone the request with the auth header
       request = request.clone({
@@ -34,14 +62,20 @@ export class JwtInterceptor implements HttpInterceptor {
           Authorization: `Bearer ${token}` 
         }
       });
-      
-      // Additional paranoia check for fake backend to ensure token is valid
-      if (environment.useFakeBackend && (!token || token === 'undefined')) {
-        console.error('JWT token is invalid in fake backend mode - forcing re-login');
-        this.accountService.logout();  // This will trigger a re-login via app initializer
-      }
     }
 
-    return next.handle(request);
+    // Log response for API calls
+    return next.handle(request).pipe(
+      tap({
+        next: (event) => {
+          if (event.type === 0) { // HttpEventType.Sent = 0
+            console.log(`JWT Interceptor: Request sent to ${request.url}`);
+          }
+        },
+        error: (error) => {
+          console.error(`JWT Interceptor: Error in request to ${request.url}:`, error);
+        }
+      })
+    );
   }
 }

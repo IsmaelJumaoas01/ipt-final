@@ -9,8 +9,7 @@ export class LayoutComponent {
     private router: Router,
     private accountService: AccountService
   ) {
-    if (this.accountService.accountValue) {
-      this.router.navigate(['/']);
-    }
+    // The LayoutComponent is no longer used in routing
+    console.log('LayoutComponent initialized but not used in routing');
   }
 }

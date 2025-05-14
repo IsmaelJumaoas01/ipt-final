@@ -66,7 +66,6 @@ export class AccountService {
     if (environment.useFakeBackend) {
       localStorage.removeItem('currentUser');
       this.accountSubject.next(null);
-      this.router.navigate(['/account/login']);
       return of(null);
     }
     
@@ -78,7 +77,6 @@ export class AccountService {
           // Remove account from local storage and set current account to null regardless of API call result
           localStorage.removeItem('currentUser');
           this.accountSubject.next(null);
-          this.router.navigate(['/account/login']);
         })
       );
   }
@@ -88,6 +86,12 @@ export class AccountService {
    * @returns Observable of the refreshed account
    */
   refreshToken() {
+    // Skip token refresh for account routes
+    if (this.isAccountRoute()) {
+      console.log('AccountService: Skipping token refresh for account route');
+      return of(null);
+    }
+    
     return this.http
       .post<any>(`${baseUrl}/refresh-token`, {}, { withCredentials: true })
       .pipe(
@@ -116,6 +120,7 @@ export class AccountService {
    * @returns Observable of the verification response
    */
   verifyEmail(token: string) {
+    console.log('Sending verification request with token:', token);
     return this.http.post(`${baseUrl}/verify-email`, { token });
   }
 
@@ -264,5 +269,12 @@ export class AccountService {
       clearTimeout(this.refreshTokenTimeout);
       this.refreshTokenTimeout = null;
     }
+  }
+
+  // Add a method to check if the current URL is an account route
+  private isAccountRoute(): boolean {
+    // Use window.location.href to get the full URL
+    const currentUrl = window.location.href;
+    return currentUrl.includes('/account/');
   }
 }

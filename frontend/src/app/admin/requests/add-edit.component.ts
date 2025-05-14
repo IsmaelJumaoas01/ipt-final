@@ -4,6 +4,7 @@ import { first } from 'rxjs/operators';
 
 import { RequestService } from '../../_services/request.service';
 import { AlertService } from '../../_services/alert.service';
+import { AccountService } from '../../_services';
 
 @Component({ templateUrl: './add-edit.component.html' })
 export class AddEditComponent implements OnInit {
@@ -17,6 +18,7 @@ export class AddEditComponent implements OnInit {
     loading = false;
     submitted = false;
     errorMessage: string = '';
+    isAdmin = false;
     
     // Request type options with proper casing
     requestTypes = [
@@ -25,13 +27,24 @@ export class AddEditComponent implements OnInit {
         { value: 'Leave', label: 'Leave Request' },
         { value: 'Transfer', label: 'Transfer Request' }
     ];
+    
+    // Status options
+    statusOptions = [
+        { value: 'Pending', label: 'Pending' },
+        { value: 'Approved', label: 'Approved' },
+        { value: 'Rejected', label: 'Rejected' }
+    ];
 
     constructor(
         private route: ActivatedRoute,
         private router: Router,
         private requestService: RequestService,
-        private alertService: AlertService
-    ) {}
+        private alertService: AlertService,
+        private accountService: AccountService
+    ) {
+        // Check if user is admin
+        this.isAdmin = this.accountService.accountValue?.role === 'Admin';
+    }
 
     ngOnInit() {
         this.id = this.route.snapshot.params['id'];
@@ -137,6 +150,11 @@ export class AddEditComponent implements OnInit {
         // Ensure type has proper casing
         if (this.request.type) {
             this.request.type = this.capitalizeFirstLetter(this.request.type);
+        }
+        
+        // Ensure status has proper casing
+        if (this.request.status) {
+            this.request.status = this.capitalizeFirstLetter(this.request.status);
         }
 
         if (this.id) {

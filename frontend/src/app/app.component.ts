@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { environment } from '../environments/environment';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 import { AccountService } from './_services';
 import { Account, Role } from './_models';
@@ -10,7 +11,7 @@ import { Account, Role } from './_models';
     templateUrl: 'app.component.html',
     styleUrls: ['app.component.less']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
     title = 'user-management-system';
     Role = Role;
     account: Account | null = null;
@@ -23,21 +24,57 @@ export class AppComponent {
         this.accountService.account.subscribe(x => {
             this.account = x;
             
-            // If using fake backend but no account is set, auto-login as admin
-            if (environment.useFakeBackend && !x) {
-                this.autoLoginWithFakeBackend();
-            }
+            // Remove auto-redirect to login - allow guest access to the root route
         });
         
         // Auto-login as admin if using fake backend and not already logged in
-        if (environment.useFakeBackend) {
+        if (environment.useFakeBackend && !this.account) {
             this.autoLoginWithFakeBackend();
         }
     }
     
+    ngOnInit() {
+        // Listen to route changes to properly set/remove account route flags
+        this.router.events.pipe(
+            filter(event => event instanceof NavigationEnd)
+        ).subscribe((event: NavigationEnd) => {
+            // Check if we're on an account route
+            const accountRoutes = [
+                '/account/',
+                '/register',
+                '/verify-email',
+                '/reset-password',
+                '/forgot-password'
+            ];
+            
+            const isAccountRoute = accountRoutes.some(route => event.url.includes(route));
+            
+            if (isAccountRoute) {
+                localStorage.setItem('isAccountRoute', 'true');
+                localStorage.setItem('lastAccountRoute', event.url);
+                console.log('Navigation event: Set account route flag for:', event.url);
+            } else {
+                // Only clear the flag when navigating away from account routes
+                localStorage.removeItem('isAccountRoute');
+                localStorage.removeItem('accountRouteReload');
+                localStorage.removeItem('accountRouteParams');
+                console.log('Navigation event: Cleared account route flags');
+            }
+        });
+        
+        // Check and handle URL hash recovery for account routes
+        const urlHash = window.location.hash;
+        if (urlHash && urlHash.includes('/account/')) {
+            // Extract the path from the hash
+            const hashPath = urlHash.substring(1);
+            console.log('Detected account route in hash, navigating to:', hashPath);
+            this.router.navigateByUrl(hashPath);
+        }
+    }
+    
     private autoLoginWithFakeBackend() {
-        // Only login if not already logged in
-        if (!this.account && !localStorage.getItem('currentUser')) {
+        // Only login if not already logged in and using fake backend
+        if (!this.account && !localStorage.getItem('currentUser') && environment.useFakeBackend) {
             this.accountService.login('admin@example.com', 'admin').subscribe({
                 next: () => {
                     // Navigate to home/admin dashboard after login
@@ -48,14 +85,19 @@ export class AppComponent {
     }
 
     logout() {
-        // If using fake backend, prevent actual logout
-        if (environment.useFakeBackend) {
-            // Just redirect to home instead of logging out
-            this.router.navigate(['/']);
-            return;
-        }
+        // Clear all account route flags
+        localStorage.removeItem('isAccountRoute');
+        localStorage.removeItem('accountRouteReload');
+        localStorage.removeItem('lastAccountRoute');
+        localStorage.removeItem('accountRouteParams');
         
-        this.accountService.logout();
+        // Call the account service logout method
+        this.accountService.logout().subscribe({
+            next: () => {
+                // Navigate to login page after logout
+                this.router.navigate(['/account/login']);
+            }
+        });
     }
 
     showDetails() {

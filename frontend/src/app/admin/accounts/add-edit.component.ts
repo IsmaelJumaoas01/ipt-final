@@ -9,12 +9,13 @@ import { MustMatch } from '../../_helpers/must-match.validator';
 
 @Component({ templateUrl: 'add-edit.component.html' })
 export class AddEditComponent implements OnInit {
-    form: UntypedFormGroup;
+    form!: UntypedFormGroup;
     id: string;
     isAddMode: boolean;
     loading = false;
     submitted = false;
     errorMessage: string = '';
+    titles = ['Mr', 'Mrs', 'Miss', 'Ms', 'Dr'];
 
     constructor(
         private formBuilder: UntypedFormBuilder,
@@ -46,8 +47,12 @@ export class AddEditComponent implements OnInit {
                 .pipe(first())
                 .subscribe({
                     next: x => {
-                    if (!x.status) x.status = 'Active';
-                    this.form.patchValue(x);
+                        if (!x.status) x.status = 'Active';
+                        if (!x.title || !this.titles.includes(x.title)) {
+                            x.title = 'Mr';
+                        }
+                        console.log('Account data loaded:', x);
+                        this.form.patchValue(x);
                     },
                     error: error => {
                         this.errorMessage = error.error?.message || 'Error loading account';

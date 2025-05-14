@@ -22,6 +22,15 @@ export class ErrorInterceptor implements HttpInterceptor {
                 delay: 500
             }) : retry(0),
             catchError(err => {
+                // Check if we're on an account route, if so, don't redirect
+                const currentUrl = window.location.href;
+                const isAccountRoute = currentUrl.includes('/account/');
+                
+                if (isAccountRoute) {
+                    console.log('Error interceptor: On account route, not redirecting for auth errors:', currentUrl);
+                    return throwError(err.error?.message || err.statusText);
+                }
+                
                 // Only attempt refresh if this is a 401 error and not a login/refresh request
                 if (err.status === 401 && 
                     this.accountService.accountValue && 

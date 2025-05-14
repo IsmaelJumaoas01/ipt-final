@@ -1,36 +1,282 @@
 <div class="p-4">
     <div class="container">
-        <h1>Welcome to Employee Management System</h1>
-        <p>You are logged in as: <strong>{{account?.firstName}} {{account?.lastName}}</strong> ({{account?.role}})</p>
-        
-        <div class="row mt-4">
-            <!-- Admin Quick Links -->
-            <div class="col-md-6 mb-4" *ngIf="account?.role === 'Admin'">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Admin Quick Links</h5>
+        <!-- Guest Dashboard (When Not Logged In) -->
+        <div *ngIf="!account" class="guest-dashboard">
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-users-cog fa-5x text-primary"></i>
+                    <h1 class="display-4 mt-4">Employee Management System</h1>
+                    <p class="lead">A comprehensive platform for managing employee information, departments, and requests</p>
+                </div>
+                
+                <div class="row justify-content-center mt-5">
+                    <div class="col-md-8">
+                        <div class="card shadow-lg border-0">
+                            <div class="card-body p-5">
+                                <h2 class="mb-4">Welcome to Our Platform</h2>
+                                <p class="mb-4">Please sign in to access your dashboard or register for a new account.</p>
+                                
+                                <div class="d-grid gap-3 d-md-flex justify-content-md-center">
+                                    <button (click)="goToLogin()" class="btn btn-primary btn-lg px-5">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                                    </button>
+                                    <button (click)="goToRegister()" class="btn btn-outline-primary btn-lg px-5">
+                                        <i class="fas fa-user-plus me-2"></i>Register
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            <a routerLink="/admin" class="list-group-item list-group-item-action">Dashboard</a>
-                            <a routerLink="/employees" class="list-group-item list-group-item-action">Manage Employees</a>
-                            <a routerLink="/departments" class="list-group-item list-group-item-action">Manage Departments</a>
-                            <a routerLink="/requests" class="list-group-item list-group-item-action">View Requests</a>
+                </div>
+                
+                <div class="row mt-5 pt-5">
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-user-tie fa-3x text-primary"></i>
+                                </div>
+                                <h4>Employee Management</h4>
+                                <p class="card-text">Efficiently manage employee profiles, departments, and roles in one place.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-tasks fa-3x text-success"></i>
+                                </div>
+                                <h4>Request Tracking</h4>
+                                <p class="card-text">Submit and track requests for equipment, leave, expenses, and more.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-chart-line fa-3x text-info"></i>
+                                </div>
+                                <h4>Analytics & Reports</h4>
+                                <p class="card-text">Get insights into employee performance and organizational metrics.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div *ngIf="account?.role === 'Admin'">
+            <h1>Admin Dashboard</h1>
+            <p>Welcome, <strong>{{account?.firstName}} {{account?.lastName}}</strong> ({{account?.role}})</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Admin Quick Links</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                <a routerLink="/admin" class="list-group-item list-group-item-action">Dashboard</a>
+                                <a routerLink="/employees" class="list-group-item list-group-item-action">Manage Employees</a>
+                                <a routerLink="/departments" class="list-group-item list-group-item-action">Manage Departments</a>
+                                <a routerLink="/requests" class="list-group-item list-group-item-action">View Requests</a>
+                                <a routerLink="/workflows" class="list-group-item list-group-item-action">Manage Workflows</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>System Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Total Employees
+                                    <span class="badge bg-primary rounded-pill">{{statistics?.employeeCount || 0}}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Departments
+                                    <span class="badge bg-primary rounded-pill">{{statistics?.departmentCount || 0}}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Pending Requests
+                                    <span class="badge bg-warning rounded-pill">{{statistics?.pendingRequestCount || 0}}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Dashboard -->
+        <div *ngIf="account?.role === 'User'">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1>My Dashboard</h1>
+                    <p>Welcome, <strong>{{account?.firstName}} {{account?.lastName}}</strong></p>
+                </div>
+                <div>
+                    <a routerLink="/requests/add" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>New Request
+                    </a>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Employee Information -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-user me-2"></i>My Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div *ngIf="employeeInfo" class="d-flex flex-column">
+                                <div class="mb-3 text-center">
+                                    <div class="avatar-circle mb-3">
+                                        <span class="initials">{{account?.firstName?.charAt(0) || ''}}{{account?.lastName?.charAt(0) || ''}}</span>
+                                    </div>
+                                    <h5>{{account?.firstName}} {{account?.lastName}}</h5>
+                                </div>
+                                <div class="employee-details">
+                                    <p><strong>Employee ID:</strong> {{employeeInfo?.employeeId}}</p>
+                                    <p><strong>Position:</strong> {{employeeInfo?.position}}</p>
+                                    <p><strong>Department:</strong> {{employeeInfo?.department?.name}}</p>
+                                    <p><strong>Status:</strong> <span class="badge bg-success">{{employeeInfo?.status}}</span></p>
+                                    <p><strong>Hire Date:</strong> {{employeeInfo?.hireDate | date:'mediumDate'}}</p>
+                                </div>
+                                <a routerLink="/profile" class="btn btn-outline-primary mt-3">
+                                    <i class="fas fa-user-edit me-2"></i>Edit Profile
+                                </a>
+                            </div>
+                            <div *ngIf="!employeeInfo" class="text-center py-4">
+                                <i class="fas fa-user-circle fa-3x text-muted mb-3"></i>
+                                <p>Employee information not available</p>
+                                <a routerLink="/profile" class="btn btn-outline-primary">Complete Profile</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="col-md-8 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>My Requests</h5>
+                        </div>
+                        <div class="card-body">
+                            <div *ngIf="loading" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading your requests...</p>
+                            </div>
+                            
+                            <div *ngIf="!loading && requests && requests.length > 0" class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr *ngFor="let request of requests">
+                                            <td>
+                                                <span [ngClass]="{
+                                                    'badge bg-info': request.type === 'Equipment',
+                                                    'badge bg-primary': request.type === 'Expense',
+                                                    'badge bg-secondary': request.type === 'Leave',
+                                                    'badge bg-dark': request.type === 'Transfer'
+                                                }">{{request.type}}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge" [ngClass]="{
+                                                    'bg-warning': request.status === 'Pending',
+                                                    'bg-success': request.status === 'Approved',
+                                                    'bg-danger': request.status === 'Rejected'
+                                                }">{{request.status}}</span>
+                                            </td>
+                                            <td>{{request.createdAt | date:'shortDate'}}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a [routerLink]="['/requests', request.id]" class="btn btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a [routerLink]="['/requests/edit', request.id]" class="btn btn-outline-secondary">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="text-center mt-3">
+                                    <a routerLink="/requests" class="btn btn-outline-primary">View All Requests</a>
+                                </div>
+                            </div>
+                            
+                            <div *ngIf="!loading && (!requests || requests.length === 0)" class="text-center py-4">
+                                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                <p>You don't have any requests yet</p>
+                                <a routerLink="/requests/add" class="btn btn-primary">Create Your First Request</a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- User Quick Links -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>User Options</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            <a routerLink="/requests" class="list-group-item list-group-item-action">My Requests</a>
-                            <a routerLink="/profile" class="list-group-item list-group-item-action">My Profile</a>
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-link me-2"></i>Quick Links</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <a routerLink="/requests" class="card text-center h-100 text-decoration-none">
+                                        <div class="card-body">
+                                            <i class="fas fa-clipboard-list fa-2x text-primary mb-3"></i>
+                                            <h6>My Requests</h6>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <a routerLink="/requests/add" class="card text-center h-100 text-decoration-none">
+                                        <div class="card-body">
+                                            <i class="fas fa-file-alt fa-2x text-success mb-3"></i>
+                                            <h6>New Request</h6>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <a routerLink="/profile" class="card text-center h-100 text-decoration-none">
+                                        <div class="card-body">
+                                            <i class="fas fa-user-cog fa-2x text-info mb-3"></i>
+                                            <h6>My Profile</h6>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-3">
+                                    <a href="javascript:void(0)" (click)="accountService.logout()" class="card text-center h-100 text-decoration-none">
+                                        <div class="card-body">
+                                            <i class="fas fa-sign-out-alt fa-2x text-danger mb-3"></i>
+                                            <h6>Logout</h6>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -38,3 +284,35 @@
         </div>
     </div>
 </div>
+
+<style>
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    background-color: #007bff;
+    text-align: center;
+    border-radius: 50%;
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.initials {
+    position: relative;
+    font-size: 32px;
+    line-height: 80px;
+    color: #fff;
+    font-weight: bold;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.guest-dashboard {
+    min-height: 80vh;
+}
+</style>

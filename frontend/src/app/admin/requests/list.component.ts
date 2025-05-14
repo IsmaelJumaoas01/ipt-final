@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { RequestService } from '../../_services/request.service';
 import { AccountService } from '../../_services/account.service';
 import { Router } from '@angular/router';
+import { first } from 'rxjs/operators';
 
 @Component({
   selector: 'app-request-list',
@@ -9,6 +10,7 @@ import { Router } from '@angular/router';
 })
 export class ListComponent implements OnInit {
   requests: any[] = [];
+  loading = false;
 
   constructor(
     private requestService: RequestService,
@@ -17,7 +19,18 @@ export class ListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.requestService.getAll().subscribe(data => this.requests = data);
+    this.loading = true;
+    this.requestService.getAll().pipe(first()).subscribe({
+      next: data => {
+        this.requests = data;
+        console.log('Loaded requests:', this.requests);
+        this.loading = false;
+      },
+      error: error => {
+        console.error('Error loading requests:', error);
+        this.loading = false;
+      }
+    });
   }
 
   account() {
@@ -29,9 +42,16 @@ export class ListComponent implements OnInit {
   }
 
   delete(requestId: number) {
-    this.requestService.delete(requestId).subscribe(() => {
-      this.requests = this.requests.filter(r => r.id !== requestId);
-    });
+    if (confirm('Are you sure you want to delete this request?')) {
+      this.requestService.delete(requestId).subscribe({
+        next: () => {
+          this.requests = this.requests.filter(r => r.id !== requestId);
+        },
+        error: error => {
+          console.error('Error deleting request:', error);
+        }
+      });
+    }
   }
 
   add() {

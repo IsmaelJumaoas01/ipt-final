@@ -3,7 +3,7 @@ services:
     name: ipt-final-api
     env: node
     rootDir: .
-    nodeVersion: 16.20.0
+    nodeVersion: 18.17.0
     buildCommand: |
       set -ex  # Exit on any error and print commands
       
@@ -34,17 +34,22 @@ services:
       echo "=== INSTALLING ANGULAR CLI ==="
       npm install -g @angular/cli@16.2.12
       
-      # Install dependencies
-      echo "=== INSTALLING DEPENDENCIES ==="
+      # Install specific Angular build tools first
+      echo "=== INSTALLING ANGULAR BUILD TOOLS ==="
+      npm install @angular-devkit/build-angular@16.2.12 --save-dev --legacy-peer-deps
+      npm install @angular/cli@16.2.12 --save-dev --legacy-peer-deps
+      
+      # Install remaining dependencies
+      echo "=== INSTALLING REMAINING DEPENDENCIES ==="
       npm install --legacy-peer-deps
       
       # Verify Angular installation
       echo "=== VERIFYING ANGULAR INSTALLATION ==="
       ng version
       
-      # Build the application
+      # Build the application with explicit path to node_modules
       echo "=== BUILDING APPLICATION ==="
-      NODE_OPTIONS="--max_old_space_size=4096" ng build --configuration production --aot --build-optimizer --vendor-chunk --progress
+      NODE_OPTIONS="--max_old_space_size=4096" ./node_modules/.bin/ng build --configuration production --aot --build-optimizer --vendor-chunk --progress
       
       cd ..
       

@@ -2,6 +2,10 @@
   "name": "user-management-system",
   "version": "1.0.0",
   "description": "User Management System with Angular Frontend and Node.js Backend",
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  },
   "scripts": {
     "preinstall": "npm install -g @angular/cli@16.2.12",
     "install:angular-tools": "cd frontend && npm install @angular-devkit/build-angular@16.2.12 @angular/cli@16.2.12 @angular/compiler-cli@16.2.12 @angular-devkit/core@16.2.12 @angular-devkit/schematics@16.2.12 @schematics/angular@16.2.12 --save-dev",

@@ -1,4 +1,4 @@
-const config = require('config.json');
+const config = require('./config');
 const mysql = require('mysql2/promise');
 const { Sequelize } = require('sequelize');
 
@@ -7,45 +7,59 @@ module.exports = db = {};
 initialize();
 
 async function initialize() {
+    try {
+        const { host, port, user, password, database } = config.database;
+        console.log('Connecting to database with config:', { host, port, user, database });
+        
+        const connection = await mysql.createConnection({ 
+            host, 
+            port, 
+            user, 
+            password,
+            connectTimeout: 10000
+        });
+        
+        console.log('Connected to MySQL server');
+        
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
+        console.log(`Database ${database} created or already exists`);
+        
+        const sequelize = new Sequelize(database, user, password, { 
+            host,
+            port,
+            dialect: 'mysql',
+            logging: false
+        });
+        
+        db.Account = require('../accounts/account.model')(sequelize);
+        db.RefreshToken = require('../accounts/refresh-token.model')(sequelize);
+        
+        db.Employee = require('../employees/employee.model')(sequelize);
+        db.Department = require('../departments/department.model')(sequelize);
+        db.Request = require('../requests/request.model')(sequelize);
+        db.RequestItem = require('../requests/request-item.model')(sequelize);
+        db.Workflow = require('../workflows/workflow.model')(sequelize);
+        
+        db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
+        db.RefreshToken.belongsTo(db.Account);
 
-    const { host, port, user, password, database } = config.database;
-    const connection = await mysql.createConnection({ host, port, user, password });
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
-    
+        db.Employee.belongsTo(db.Account, { foreignKey: 'userId', as: 'user' });
+        db.Employee.belongsTo(db.Department, { foreignKey: 'departmentId' });
+        db.Department.hasMany(db.Employee, { foreignKey: 'departmentId' });
 
-    const sequelize = new Sequelize(database, user, password, { dialect: 'mysql' });
-    
+        db.Request.belongsTo(db.Employee, { foreignKey: 'employeeId' });
+        db.Request.hasMany(db.RequestItem, { foreignKey: 'requestId' });
+        db.RequestItem.belongsTo(db.Request, { foreignKey: 'requestId' });
 
-    db.Account = require('../accounts/account.model')(sequelize);
-    db.RefreshToken = require('../accounts/refresh-token.model')(sequelize);
-    
+        db.Workflow.belongsTo(db.Employee, { foreignKey: 'employeeId', as: 'employee' });
+        db.Employee.hasMany(db.Workflow, { foreignKey: 'employeeId', as: 'workflows' });
 
-    // New models
-    db.Employee = require('../employees/employee.model')(sequelize);
-    db.Department = require('../departments/department.model')(sequelize);
-    db.Request = require('../requests/request.model')(sequelize);
-    db.RequestItem = require('../requests/request-item.model')(sequelize);
-    db.Workflow = require('../workflows/workflow.model')(sequelize);
-    
-
-    // Associations
-    db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
-    db.RefreshToken.belongsTo(db.Account);
-
-    db.Employee.belongsTo(db.Account, { foreignKey: 'userId', as: 'user' });
-    db.Employee.belongsTo(db.Department, { foreignKey: 'departmentId' });
-    db.Department.hasMany(db.Employee, { foreignKey: 'departmentId' });
-
-    db.Request.belongsTo(db.Employee, { foreignKey: 'employeeId' });
-    db.Request.hasMany(db.RequestItem, { foreignKey: 'requestId' });
-    db.RequestItem.belongsTo(db.Request, { foreignKey: 'requestId' });
-
-    db.Workflow.belongsTo(db.Employee, { foreignKey: 'employeeId', as: 'employee' });
-    db.Employee.hasMany(db.Workflow, { foreignKey: 'employeeId', as: 'workflows' });
-
-    await sequelize.sync({ alter: true });
-    
-    // Seed the database with default data if needed
-    const seedData = require('./seed-data');
-    await seedData.seedDatabase();
+        await sequelize.sync({ alter: true });
+        
+        const seedData = require('./seed-data');
+        await seedData.seedDatabase();
+    } catch (error) {
+        console.error('Database initialization error:', error);
+        throw error;
+    }
 }

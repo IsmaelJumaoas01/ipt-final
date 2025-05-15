@@ -1,23 +1,23 @@
 {
     "database": {
-      "host": "process.env.DB_HOST || 'localhost'",
-      "port": "process.env.DB_PORT || 3306",
-      "user": "process.env.DB_USER || 'root'",
-      "password": "process.env.DB_PASSWORD || ''",
-      "database": "process.env.DB_NAME || 'node-mysql-signup-verification-api'"
+      "host": "localhost",
+      "port": 3306,
+      "user": "root",
+      "password": "",
+      "database": "node-mysql-signup-verification-api"
     },
-    "secret": "process.env.JWT_SECRET || 'AXAXAXAXAXAXAXDXDXDXD'",
-    "emailFrom": "process.env.EMAIL_FROM || 'info@node-mysql-signup-verification-api.com'",
+    "secret": "AXAXAXAXAXAXAXDXDXDXD",
+    "emailFrom": "info@node-mysql-signup-verification-api.com",
     "smtpOptions": {
-      "host": "process.env.SMTP_HOST || 'smtp.ethereal.email'",
-      "port": "process.env.SMTP_PORT || 587",
+      "host": "smtp.ethereal.email",
+      "port": 587,
       "auth": {
-        "user": "process.env.SMTP_USER || 'samara.toy4@ethereal.email'",
-        "pass": "process.env.SMTP_PASS || 'Zw1T2rhwmuKAcuJrtq'"
+        "user": "samara.toy4@ethereal.email",
+        "pass": "Zw1T2rhwmuKAcuJrtq"
       }
     },
     "frontendUrls": {
-      "development": "process.env.FRONTEND_URL || 'http://localhost:4200'",
-      "production": "process.env.PRODUCTION_FRONTEND_URL || 'https://your-frontend-domain.vercel.app'"
+      "development": "http://localhost:4200",
+      "production": "https://your-frontend-domain.vercel.app"
     }
 }

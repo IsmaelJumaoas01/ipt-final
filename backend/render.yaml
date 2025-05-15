@@ -21,9 +21,9 @@ services:
         cat package.json
       fi
       
-      # Install root dependencies
-      echo "=== INSTALLING ROOT DEPENDENCIES ==="
-      npm install --legacy-peer-deps
+      # Install root dependencies and all project dependencies
+      echo "=== INSTALLING ALL DEPENDENCIES ==="
+      npm run install:all
       
       # Install Angular CLI globally
       echo "=== INSTALLING ANGULAR CLI ==="

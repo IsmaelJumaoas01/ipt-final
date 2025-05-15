@@ -3,8 +3,9 @@
     "version": "0.0.0",
     "scripts": {
         "ng": "ng",
-        "start": "ng serve --open",
+        "start": "if [ \"$NODE_ENV\" = \"production\" ]; then npx serve -s dist/frontend; else ng serve; fi",
         "build": "ng build",
+        "watch": "ng build --watch --configuration development",
         "test": "ng test",
         "lint": "ng lint",
         "e2e": "ng e2e"
@@ -23,7 +24,8 @@
         "@fortawesome/fontawesome-free": "^6.0.0",
         "rxjs": "^7.8.0",
         "tslib": "^2.6.0",
-        "zone.js": "^0.13.0"
+        "zone.js": "^0.13.0",
+        "serve": "^14.2.1"
     },
     "devDependencies": {
         "@angular-devkit/build-angular": "^16.2.0",

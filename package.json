@@ -9,7 +9,7 @@
     "install:all": "npm install --legacy-peer-deps && npm install concurrently --legacy-peer-deps && cd backend && npm install --legacy-peer-deps && cd ../frontend && npm install --legacy-peer-deps",
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend && npm start",
-    "start": "./node_modules/.bin/concurrently \"npm run start:backend\" \"npm run start:frontend\""
+    "start": "npx concurrently \"npm run start:backend\" \"npm run start:frontend\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

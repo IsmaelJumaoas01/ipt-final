@@ -11,34 +11,19 @@ services:
       pwd
       ls -la
       
-      # Create root package.json if it doesn't exist
-      echo "=== CREATING ROOT PACKAGE.JSON ==="
+      # Check if root package.json exists
+      echo "=== CHECKING ROOT PACKAGE.JSON ==="
       if [ ! -f "package.json" ]; then
-        echo "Creating root package.json..."
-        cat > package.json << EOF
-{
-  "name": "ipt-final",
-  "version": "1.0.0",
-  "description": "IPT Final Project with Angular frontend and Node.js backend",
-  "scripts": {
-    "start": "node backend/server.js",
-    "server": "cd backend && npm run dev",
-    "client": "cd frontend && npm start",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
-  },
-  "dependencies": {
-    "concurrently": "^8.2.0"
-  }
-}
-EOF
-        echo "Root package.json created"
+        echo "ERROR: Root package.json not found. Please ensure it exists in the repository."
+        exit 1
       else
-        echo "Root package.json already exists"
+        echo "Root package.json found"
+        cat package.json
       fi
       
-      # Install root dependencies including concurrently
-      echo "=== INSTALLING ROOT DEPENDENCIES ==="
-      npm install --verbose
+      # Install all dependencies including concurrently in root
+      echo "=== INSTALLING ALL DEPENDENCIES ==="
+      npm run install:all
       
       # Install Angular CLI globally
       echo "=== INSTALLING ANGULAR CLI ==="
@@ -52,13 +37,6 @@ EOF
       pwd
       echo "Frontend directory contents:"
       ls -la
-      
-      # Clean install frontend dependencies
-      echo "=== INSTALLING FRONTEND DEPENDENCIES ==="
-      echo "Removing existing node_modules and package-lock.json..."
-      rm -rf node_modules package-lock.json
-      echo "Running npm install..."
-      npm install --verbose
       
       # Build frontend with production config
       echo "=== BUILDING FRONTEND ==="
@@ -100,14 +78,6 @@ EOF
       echo "Frontend build contents:"
       ls -la dist/frontend
       
-      # Install backend dependencies
-      echo "=== INSTALLING BACKEND DEPENDENCIES ==="
-      cd ../backend
-      echo "Current directory:"
-      pwd
-      echo "Installing backend dependencies..."
-      npm install --verbose
-      
       # Final verification
       echo "=== FINAL VERIFICATION ==="
       cd ..
@@ -130,19 +100,21 @@ EOF
       
       echo "=== BUILD COMPLETED SUCCESSFULLY ==="
     startCommand: |
-      cd backend
       echo "=== STARTING SERVER ==="
       echo "Current directory:"
       pwd
       echo "Directory contents:"
       ls -la
-      echo "Parent directory contents:"
-      ls -la ..
-      echo "Frontend directory contents:"
-      ls -la ../frontend
-      echo "Frontend dist contents:"
-      ls -la ../frontend/dist/frontend || echo "Frontend dist not found"
-      echo "=== STARTING NODE SERVER ==="
+      
+      # Verify concurrently is installed
+      echo "=== VERIFYING CONCURRENTLY INSTALLATION ==="
+      if [ ! -f "node_modules/.bin/concurrently" ]; then
+        echo "ERROR: concurrently not found in node_modules/.bin"
+        echo "Installing concurrently..."
+        npm install concurrently --legacy-peer-deps
+      fi
+      
+      echo "=== STARTING APPLICATION ==="
       NODE_ENV=production npm start
     healthCheckPath: /api-docs
     autoDeploy: true

@@ -4,46 +4,117 @@ services:
     env: node
     rootDir: .
     buildCommand: |
-      #!/bin/bash
-      set -e  # Exit on error
+      set -ex  # Exit on any error and print commands
       
-      echo "=== BUILD STARTED ==="
-      echo "Current directory: $(pwd)"
+      # Print initial directory structure
+      echo "=== INITIAL DIRECTORY STRUCTURE ==="
+      pwd
+      ls -la
       
-      # Install Node.js 18.x if not already installed
-      echo "=== SETTING UP NODE.JS ==="
-      if ! command -v nvm &> /dev/null; then
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-        export NVM_DIR="$HOME/.nvm"
-        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-      fi
-      nvm install 18
-      nvm use 18
+      # Install Angular CLI globally
+      echo "=== INSTALLING ANGULAR CLI ==="
+      npm install -g @angular/cli@16.2.0
+      ng version
       
-      # Install root dependencies
-      echo "=== INSTALLING ROOT DEPENDENCIES ==="
-      npm cache clean --force
-      npm install --legacy-peer-deps
-      
-      # Install frontend dependencies (just Express)
-      echo "=== INSTALLING FRONTEND EXPRESS SERVER ==="
+      # Build frontend
+      echo "=== STARTING FRONTEND BUILD ==="
       cd frontend
-      echo "Frontend directory: $(pwd)"
-      npm install express --save
+      echo "Current directory:"
+      pwd
+      echo "Frontend directory contents:"
+      ls -la
       
-      # Create frontend directory structure
-      echo "=== SETTING UP FRONTEND STATIC FILES ==="
-      mkdir -p dist/frontend
+      # Clean install frontend dependencies
+      echo "=== INSTALLING FRONTEND DEPENDENCIES ==="
+      echo "Removing existing node_modules and package-lock.json..."
+      rm -rf node_modules package-lock.json
+      echo "Running npm install..."
+      npm install --verbose
       
-      # Run backend installation
+      # Build frontend with production config
+      echo "=== BUILDING FRONTEND ==="
+      echo "Running ng build..."
+      NODE_OPTIONS="--max_old_space_size=4096" ng build --configuration production --verbose
+      
+      # Verify build output
+      echo "=== VERIFYING BUILD OUTPUT ==="
+      echo "Checking dist directory..."
+      if [ ! -d "dist" ]; then
+        echo "ERROR: dist directory not created"
+        echo "Current directory contents:"
+        ls -la
+        echo "npm list output:"
+        npm list
+        exit 1
+      fi
+      
+      echo "Checking dist/frontend directory..."
+      if [ ! -d "dist/frontend" ]; then
+        echo "ERROR: dist/frontend directory not created"
+        echo "dist directory contents:"
+        ls -la dist
+        echo "npm list output:"
+        npm list
+        exit 1
+      fi
+      
+      echo "Checking for index.html..."
+      if [ ! -f "dist/frontend/index.html" ]; then
+        echo "ERROR: index.html not found in dist/frontend"
+        echo "dist/frontend contents:"
+        ls -la dist/frontend
+        echo "npm list output:"
+        npm list
+        exit 1
+      fi
+      
+      echo "Frontend build contents:"
+      ls -la dist/frontend
+      
+      # Install backend dependencies
       echo "=== INSTALLING BACKEND DEPENDENCIES ==="
       cd ../backend
-      npm install --legacy-peer-deps
+      echo "Current directory:"
+      pwd
+      echo "Installing backend dependencies..."
+      npm install --verbose
       
-      echo "=== BUILD COMPLETED ==="
+      # Final verification
+      echo "=== FINAL VERIFICATION ==="
+      cd ..
+      echo "Root directory contents:"
+      ls -la
+      echo "Frontend directory contents:"
+      ls -la frontend
+      echo "Frontend dist contents:"
+      ls -la frontend/dist/frontend
+      
+      # One last check
+      if [ ! -f "frontend/dist/frontend/index.html" ]; then
+        echo "ERROR: Final verification failed - index.html not found"
+        echo "Directory structure:"
+        find . -type d -maxdepth 3
+        echo "npm list output from frontend:"
+        cd frontend && npm list
+        exit 1
+      fi
+      
+      echo "=== BUILD COMPLETED SUCCESSFULLY ==="
     startCommand: |
-      echo "=== STARTING SERVICES ==="
-      npm run start
+      cd backend
+      echo "=== STARTING SERVER ==="
+      echo "Current directory:"
+      pwd
+      echo "Directory contents:"
+      ls -la
+      echo "Parent directory contents:"
+      ls -la ..
+      echo "Frontend directory contents:"
+      ls -la ../frontend
+      echo "Frontend dist contents:"
+      ls -la ../frontend/dist/frontend || echo "Frontend dist not found"
+      echo "=== STARTING NODE SERVER ==="
+      NODE_ENV=production npm start
     healthCheckPath: /api-docs
     autoDeploy: true
     buildFilter:
@@ -51,8 +122,6 @@ services:
         include:
           - backend/**
           - frontend/**
-          - package.json
-          - package-lock.json
         ignore:
           - **/node_modules/**
           - **/.git/**

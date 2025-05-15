@@ -4,32 +4,28 @@ services:
     env: node
     buildCommand: npm run render:build
     startCommand: npm run render:start
+    healthCheckPath: /api-docs
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 18.17.0
       - key: PORT
-        value: 3000
-      - key: CORS_ORIGIN
-        value: https://ipt-final-jzfb.onrender.com
+        value: 10000
       - key: DB_HOST
-        value: 153.92.15.31
+        sync: false
       - key: DB_USER
-        value: u875409848_jumaoas
+        sync: false
       - key: DB_PASSWORD
         sync: false
       - key: DB_NAME
-        value: u875409848_jumaoas
+        sync: false
       - key: JWT_SECRET
-        generateValue: true
-    healthCheckPath: /api-docs
-    autoDeploy: true
-    buildFilter:
-      paths:
-        include:
-          - backend/**
-          - frontend/**
-        ignore:
-          - **/node_modules/**
-          - **/.git/**
-          - **/.env
-          - **/.env.* 
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: "24h"
+      - key: FRONTEND_URL
+        value: https://ipt-final.onrender.com
+      - key: BACKEND_URL
+        value: https://ipt-final-api.onrender.com 

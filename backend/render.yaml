@@ -11,19 +11,30 @@ services:
       
       # Install Angular CLI globally
       echo "Installing Angular CLI..."
-      npm install -g @angular/cli
+      npm install -g @angular/cli@16.2.0
       
       # Build frontend
       echo "Building frontend..."
       cd frontend
+      echo "Frontend directory contents before build:"
+      ls -la
+      
+      # Install frontend dependencies
+      echo "Installing frontend dependencies..."
       npm install
+      
+      # Build frontend with production config
+      echo "Running frontend build..."
       npm run build -- --configuration production
       
       # Verify frontend build
       echo "Verifying frontend build..."
       if [ ! -d "dist/frontend" ]; then
         echo "ERROR: Frontend build failed - dist/frontend not found"
-        ls -la dist
+        echo "Current directory contents:"
+        ls -la
+        echo "dist directory contents:"
+        ls -la dist || true
         exit 1
       fi
       
@@ -31,16 +42,18 @@ services:
       echo "Frontend build contents:"
       ls -la dist/frontend
       
-      # Go back to root and install backend dependencies
-      cd ../backend
+      # Install backend dependencies
       echo "Installing backend dependencies..."
+      cd ../backend
       npm install
       
       # Final directory check
       echo "Final directory structure:"
       cd ..
-      pwd
+      echo "Root directory contents:"
       ls -la
+      echo "Frontend directory contents:"
+      ls -la frontend
       echo "Frontend dist contents:"
       ls -la frontend/dist/frontend
     startCommand: |
@@ -51,6 +64,8 @@ services:
       ls -la
       echo "Parent directory contents:"
       ls -la ..
+      echo "Frontend dist contents:"
+      ls -la ../frontend/dist/frontend
       npm start
     healthCheckPath: /api-docs
     autoDeploy: true

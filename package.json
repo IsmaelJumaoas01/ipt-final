@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "User Management System with Angular Frontend and Node.js Backend",
   "scripts": {
-    "preinstall": "npm install -g @angular/cli@16.2.0",
-    "install:angular-tools": "cd frontend && npm install @angular-devkit/build-angular@16.2.0 @angular/cli@16.2.0 @angular/compiler-cli@16.2.0 @angular-devkit/core@16.2.0 @angular-devkit/schematics@16.2.0 @schematics/angular@16.2.0 --save-dev",
+    "preinstall": "npm install -g @angular/cli@16.2.12",
+    "install:angular-tools": "cd frontend && npm install @angular-devkit/build-angular@16.2.12 @angular/cli@16.2.12 @angular/compiler-cli@16.2.12 @angular-devkit/core@16.2.12 @angular-devkit/schematics@16.2.12 @schematics/angular@16.2.12 --save-dev",
     "install:all": "npm install concurrently --legacy-peer-deps && npm run install:angular-tools && cd frontend && rm -rf node_modules package-lock.json && npm install --legacy-peer-deps && cd ../backend && npm install --legacy-peer-deps",
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend && npm start",

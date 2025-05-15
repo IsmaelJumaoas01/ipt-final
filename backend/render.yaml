@@ -4,116 +4,26 @@ services:
     env: node
     rootDir: .
     buildCommand: |
-      set -ex  # Exit on any error and print commands
-      
-      # Print initial directory structure
-      echo "=== INITIAL DIRECTORY STRUCTURE ==="
+      echo "=== BUILD STARTED ==="
       pwd
       ls -la
       
-      # Install Angular CLI globally
-      echo "=== INSTALLING ANGULAR CLI ==="
-      npm install -g @angular/cli@16.2.0
-      ng version
-      
-      # Build frontend
-      echo "=== STARTING FRONTEND BUILD ==="
-      cd frontend
-      echo "Current directory:"
-      pwd
-      echo "Frontend directory contents:"
-      ls -la
-      
-      # Clean install frontend dependencies
-      echo "=== INSTALLING FRONTEND DEPENDENCIES ==="
-      echo "Removing existing node_modules and package-lock.json..."
-      rm -rf node_modules package-lock.json
-      echo "Running npm install..."
-      npm install --verbose
-      
-      # Build frontend with production config
-      echo "=== BUILDING FRONTEND ==="
-      echo "Running ng build..."
-      NODE_OPTIONS="--max_old_space_size=4096" ng build --configuration production --verbose
-      
-      # Verify build output
-      echo "=== VERIFYING BUILD OUTPUT ==="
-      echo "Checking dist directory..."
-      if [ ! -d "dist" ]; then
-        echo "ERROR: dist directory not created"
-        echo "Current directory contents:"
-        ls -la
-        echo "npm list output:"
-        npm list
-        exit 1
-      fi
-      
-      echo "Checking dist/frontend directory..."
-      if [ ! -d "dist/frontend" ]; then
-        echo "ERROR: dist/frontend directory not created"
-        echo "dist directory contents:"
-        ls -la dist
-        echo "npm list output:"
-        npm list
-        exit 1
-      fi
-      
-      echo "Checking for index.html..."
-      if [ ! -f "dist/frontend/index.html" ]; then
-        echo "ERROR: index.html not found in dist/frontend"
-        echo "dist/frontend contents:"
-        ls -la dist/frontend
-        echo "npm list output:"
-        npm list
-        exit 1
-      fi
-      
-      echo "Frontend build contents:"
-      ls -la dist/frontend
-      
-      # Install backend dependencies
       echo "=== INSTALLING BACKEND DEPENDENCIES ==="
-      cd ../backend
-      echo "Current directory:"
-      pwd
-      echo "Installing backend dependencies..."
-      npm install --verbose
+      cd backend
+      npm install
       
-      # Final verification
-      echo "=== FINAL VERIFICATION ==="
-      cd ..
-      echo "Root directory contents:"
-      ls -la
-      echo "Frontend directory contents:"
-      ls -la frontend
-      echo "Frontend dist contents:"
-      ls -la frontend/dist/frontend
+      echo "=== INSTALLING FRONTEND DEPENDENCIES ==="
+      cd ../frontend
+      npm install
       
-      # One last check
-      if [ ! -f "frontend/dist/frontend/index.html" ]; then
-        echo "ERROR: Final verification failed - index.html not found"
-        echo "Directory structure:"
-        find . -type d -maxdepth 3
-        echo "npm list output from frontend:"
-        cd frontend && npm list
-        exit 1
-      fi
+      echo "=== BUILDING FRONTEND ==="
+      npm install -g @angular/cli@16.2.0
+      ng build --configuration production
       
-      echo "=== BUILD COMPLETED SUCCESSFULLY ==="
+      echo "=== BUILD COMPLETED ==="
     startCommand: |
       cd backend
       echo "=== STARTING SERVER ==="
-      echo "Current directory:"
-      pwd
-      echo "Directory contents:"
-      ls -la
-      echo "Parent directory contents:"
-      ls -la ..
-      echo "Frontend directory contents:"
-      ls -la ../frontend
-      echo "Frontend dist contents:"
-      ls -la ../frontend/dist/frontend || echo "Frontend dist not found"
-      echo "=== STARTING NODE SERVER ==="
       NODE_ENV=production npm start
     healthCheckPath: /api-docs
     autoDeploy: true

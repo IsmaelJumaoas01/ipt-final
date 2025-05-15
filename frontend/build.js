@@ -28,11 +28,22 @@ async function build() {
         fs.rmSync(distPath, { recursive: true, force: true });
     }
 
-    // Install dependencies if node_modules doesn't exist
-    if (!fs.existsSync(path.join(__dirname, 'node_modules'))) {
-        console.log('Installing dependencies...');
-        runCommand('npm install --legacy-peer-deps');
+    // Clean node_modules and package-lock.json
+    console.log('Cleaning node_modules...');
+    if (fs.existsSync(path.join(__dirname, 'node_modules'))) {
+        fs.rmSync(path.join(__dirname, 'node_modules'), { recursive: true, force: true });
     }
+    if (fs.existsSync(path.join(__dirname, 'package-lock.json'))) {
+        fs.unlinkSync(path.join(__dirname, 'package-lock.json'));
+    }
+
+    // Install dependencies
+    console.log('Installing dependencies...');
+    runCommand('npm install --legacy-peer-deps');
+
+    // Install Angular CLI globally
+    console.log('Installing Angular CLI globally...');
+    runCommand('npm install -g @angular/cli@16.2.12');
 
     // Install specific Angular packages
     console.log('Installing Angular packages...');
@@ -55,9 +66,32 @@ async function build() {
     
     runCommand(`npm install --save-exact --legacy-peer-deps ${angularPackages.join(' ')}`);
 
-    // Run the build
+    // Verify Angular installation
+    console.log('Verifying Angular installation...');
+    runCommand('ng version');
+
+    // Create a temporary build script
+    console.log('Creating temporary build script...');
+    const buildScript = `
+        const { execSync } = require('child_process');
+        const path = require('path');
+        
+        // Get the path to the Angular CLI
+        const ngPath = path.join(__dirname, 'node_modules', '.bin', 'ng');
+        
+        // Run the build command
+        execSync(\`\${ngPath} build --configuration production\`, { stdio: 'inherit' });
+    `;
+    
+    fs.writeFileSync('temp-build.js', buildScript);
+
+    // Run the temporary build script
     console.log('Building application...');
-    runCommand('npx ng build --configuration production');
+    runCommand('node temp-build.js');
+
+    // Clean up
+    console.log('Cleaning up...');
+    fs.unlinkSync('temp-build.js');
 
     console.log('Build completed successfully!');
 }

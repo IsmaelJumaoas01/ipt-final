@@ -2,109 +2,15 @@ services:
   - type: web
     name: ipt-final-api
     env: node
-    rootDir: .
-    nodeVersion: 18.17.0
-    buildCommand: |
-      set -ex  # Exit on any error and print commands
-      
-      # Print initial directory structure
-      echo "=== INITIAL DIRECTORY STRUCTURE ==="
-      pwd
-      ls -la
-      
-      # Print Node.js version
-      echo "=== NODE VERSION ==="
-      node --version
-      npm --version
-      
-      # Install root dependencies
-      echo "=== INSTALLING ROOT DEPENDENCIES ==="
-      npm install --legacy-peer-deps
-      
-      # Install and build frontend
-      echo "=== BUILDING FRONTEND ==="
-      cd frontend
-      
-      # Clean and install dependencies
-      echo "=== CLEANING AND INSTALLING FRONTEND DEPENDENCIES ==="
-      rm -rf node_modules package-lock.json dist
-      npm cache clean --force
-      
-      # Install dependencies with specific versions
-      echo "=== INSTALLING DEPENDENCIES ==="
-      npm install --legacy-peer-deps --no-package-lock
-      
-      # Verify webpack installation
-      echo "=== VERIFYING WEBPACK INSTALLATION ==="
-      npm list webpack
-      npm list webpack-cli
-      
-      # Build the application using webpack
-      echo "=== BUILDING APPLICATION ==="
-      NODE_ENV=production NODE_OPTIONS="--max_old_space_size=4096" npx webpack --mode production --config webpack.config.js
-      
-      cd ..
-      
-      # Verify frontend build
-      echo "=== VERIFYING FRONTEND BUILD ==="
-      if [ ! -d "frontend/dist/frontend" ]; then
-        echo "ERROR: Frontend build not found"
-        echo "Directory contents:"
-        ls -la
-        echo "Frontend directory contents:"
-        ls -la frontend
-        echo "Frontend dist contents:"
-        ls -la frontend/dist
-        exit 1
-      fi
-      
-      # Install backend dependencies
-      echo "=== INSTALLING BACKEND DEPENDENCIES ==="
-      cd backend
-      npm install --legacy-peer-deps
-      cd ..
-      
-      echo "=== BUILD COMPLETED SUCCESSFULLY ==="
-    startCommand: |
-      echo "=== STARTING SERVER ==="
-      echo "Current directory:"
-      pwd
-      echo "Directory contents:"
-      ls -la
-      
-      # Verify frontend build exists
-      echo "=== VERIFYING FRONTEND BUILD ==="
-      if [ ! -d "frontend/dist/frontend" ]; then
-        echo "ERROR: Frontend build not found"
-        echo "Current directory contents:"
-        ls -la
-        echo "Frontend directory contents:"
-        ls -la frontend
-        exit 1
-      fi
-      
-      echo "Frontend build found:"
-      ls -la frontend/dist/frontend
-      
-      # Start the server
-      echo "=== STARTING APPLICATION ==="
-      cd backend
-      NODE_ENV=production npm start
-    healthCheckPath: /api-docs
-    autoDeploy: true
-    buildFilter:
-      paths:
-        include:
-          - backend/**
-          - frontend/**
-        ignore:
-          - **/node_modules/**
-          - **/.git/**
-          - **/.env
-          - **/.env.*
+    buildCommand: npm run render-build
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 3000
+      - key: CORS_ORIGIN
+        value: https://ipt-final-jzfb.onrender.com
       - key: DB_HOST
         value: 153.92.15.31
       - key: DB_USER
@@ -115,7 +21,15 @@ services:
         value: u875409848_jumaoas
       - key: JWT_SECRET
         generateValue: true
-      - key: PORT
-        value: 10000
-      - key: PRODUCTION_FRONTEND_URL
-        value: https://ipt-final-jzfb.onrender.com 
+    healthCheckPath: /
+    autoDeploy: true
+    buildFilter:
+      paths:
+        include:
+          - backend/**
+          - frontend/**
+        ignore:
+          - **/node_modules/**
+          - **/.git/**
+          - **/.env
+          - **/.env.* 

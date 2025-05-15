@@ -19,13 +19,14 @@ services:
       echo "Frontend directory contents before build:"
       ls -la
       
-      # Install frontend dependencies
+      # Clean install frontend dependencies
       echo "Installing frontend dependencies..."
+      rm -rf node_modules package-lock.json
       npm install
       
-      # Build frontend with production config
+      # Build frontend with production config and show output
       echo "Running frontend build..."
-      npm run build -- --configuration production
+      npm run build -- --configuration production --verbose
       
       # Verify frontend build
       echo "Verifying frontend build..."
@@ -33,14 +34,24 @@ services:
         echo "ERROR: Frontend build failed - dist/frontend not found"
         echo "Current directory contents:"
         ls -la
-        echo "dist directory contents:"
+        echo "dist directory contents (if exists):"
         ls -la dist || true
+        echo "node_modules contents:"
+        ls -la node_modules || true
         exit 1
       fi
       
       # List frontend build contents
       echo "Frontend build contents:"
       ls -la dist/frontend
+      
+      # Verify index.html exists
+      if [ ! -f "dist/frontend/index.html" ]; then
+        echo "ERROR: index.html not found in dist/frontend"
+        echo "dist/frontend contents:"
+        ls -la dist/frontend
+        exit 1
+      fi
       
       # Install backend dependencies
       echo "Installing backend dependencies..."
@@ -56,6 +67,14 @@ services:
       ls -la frontend
       echo "Frontend dist contents:"
       ls -la frontend/dist/frontend
+      
+      # Verify the build one last time
+      if [ ! -f "frontend/dist/frontend/index.html" ]; then
+        echo "ERROR: Final verification failed - index.html not found"
+        echo "Directory structure:"
+        find . -type d -maxdepth 3
+        exit 1
+      fi
     startCommand: |
       cd backend
       echo "Starting server from:"
@@ -64,8 +83,10 @@ services:
       ls -la
       echo "Parent directory contents:"
       ls -la ..
+      echo "Frontend directory contents:"
+      ls -la ../frontend
       echo "Frontend dist contents:"
-      ls -la ../frontend/dist/frontend
+      ls -la ../frontend/dist/frontend || echo "Frontend dist not found"
       npm start
     healthCheckPath: /api-docs
     autoDeploy: true

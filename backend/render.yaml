@@ -17,13 +17,15 @@ services:
       - key: PORT
         value: 10000
       - key: DB_HOST
-        sync: false
+        value: 153.92.15.31
+      - key: DB_PORT
+        value: 3306
       - key: DB_USER
-        sync: false
+        value: u875409848_jumaoas
       - key: DB_PASSWORD
-        sync: false
+        value: 9T2Z5$3UKkgSYzE
       - key: DB_NAME
-        sync: false
+        value: u875409848_jumaoas
       - key: JWT_SECRET
         sync: false
       - key: JWT_EXPIRES_IN

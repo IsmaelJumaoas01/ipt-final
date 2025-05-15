@@ -36,12 +36,12 @@ services:
       
       # Verify webpack installation
       echo "=== VERIFYING WEBPACK INSTALLATION ==="
-      ls -la node_modules/.bin/webpack
+      npm list webpack
+      npm list webpack-cli
       
       # Build the application using webpack
       echo "=== BUILDING APPLICATION ==="
-      export PATH="$PATH:$(pwd)/node_modules/.bin"
-      NODE_ENV=production NODE_OPTIONS="--max_old_space_size=4096" webpack --mode production --config webpack.config.js
+      NODE_ENV=production NODE_OPTIONS="--max_old_space_size=4096" npx webpack --mode production --config webpack.config.js
       
       cd ..
       

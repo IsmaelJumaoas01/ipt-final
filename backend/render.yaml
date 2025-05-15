@@ -4,57 +4,49 @@ services:
     env: node
     rootDir: .
     buildCommand: |
+      #!/bin/bash
+      set -e  # Exit on error
+      
       echo "=== BUILD STARTED ==="
-      pwd
+      echo "Current directory: $(pwd)"
+      echo "Directory contents:"
       ls -la
       
       # Install all dependencies using the root package.json script
       echo "=== INSTALLING ALL DEPENDENCIES ==="
       npm run install:all
       
-      # Build frontend
-      echo "=== BUILDING FRONTEND ==="
-      cd frontend
-      echo "Current directory:"
-      pwd
-      echo "Directory contents:"
-      ls -la
-      
-      # Install Angular CLI globally (needed for build)
+      # Verify Angular CLI installation
       echo "=== INSTALLING ANGULAR CLI ==="
       npm install -g @angular/cli@16.2.0
       
-      # Build frontend with production config
-      echo "=== RUNNING FRONTEND BUILD ==="
-      ng build --configuration production
+      # Build frontend
+      echo "=== BUILDING FRONTEND ==="
+      cd frontend
+      echo "Frontend directory: $(pwd)"
+      echo "Frontend directory contents:"
+      ls -la
       
-      # Verify build
+      # Build with production config
+      echo "Running ng build..."
+      NODE_OPTIONS="--max_old_space_size=4096" ng build --configuration production
+      
+      # Verify build output
       echo "=== VERIFYING BUILD ==="
       if [ ! -d "dist/frontend" ]; then
         echo "ERROR: Frontend build directory not found"
         echo "Current directory contents:"
         ls -la
         echo "dist directory contents (if exists):"
-        ls -la dist || echo "dist directory not found"
+        ls -la dist || true
         exit 1
       fi
       
       echo "=== BUILD COMPLETED ==="
     startCommand: |
-      # Start the backend server
       cd backend
-      echo "=== STARTING BACKEND SERVER ==="
-      echo "Current directory:"
-      pwd
-      echo "Directory contents:"
-      ls -la
-      echo "Parent directory contents:"
-      ls -la ..
-      echo "Frontend dist contents:"
-      ls -la ../frontend/dist/frontend || echo "Frontend dist not found"
-      
-      # Start the server in production mode
-      NODE_ENV=production node server.js
+      echo "=== STARTING SERVER ==="
+      NODE_ENV=production npm start
     healthCheckPath: /api-docs
     autoDeploy: true
     buildFilter:

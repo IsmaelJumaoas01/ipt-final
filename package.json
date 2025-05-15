@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "description": "User Management System with Angular Frontend and Node.js Backend",
   "scripts": {
-    "install:all": "npm install concurrently --legacy-peer-deps && cd frontend && npm install --legacy-peer-deps && cd ../backend && npm install --legacy-peer-deps",
-    "install:angular": "npm install -g @angular/cli@16.2.0 && cd frontend && npm install @angular-devkit/build-angular@16.2.0 --save-dev",
-    "build:frontend": "cd frontend && npm install --legacy-peer-deps && npm run build",
+    "install:all": "npm install concurrently --legacy-peer-deps && cd frontend && npm install --legacy-peer-deps && npm install @angular/cli@16.2.0 @angular-devkit/build-angular@16.2.0 --save-dev && cd ../backend && npm install --legacy-peer-deps",
+    "build:frontend": "cd frontend && npm install --legacy-peer-deps && npm install @angular/cli@16.2.0 @angular-devkit/build-angular@16.2.0 --save-dev && npm run build",
     "build:backend": "cd backend && npm install --legacy-peer-deps",
     "build": "npm run build:frontend && npm run build:backend",
     "start:backend": "cd backend && npm start",

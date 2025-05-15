@@ -8,17 +8,21 @@ services:
       pwd
       ls -la
       
-      echo "=== INSTALLING BACKEND DEPENDENCIES ==="
-      cd backend
-      npm install
+      # Install all dependencies using the root package.json script
+      echo "=== INSTALLING ALL DEPENDENCIES ==="
+      npm run install:all
       
-      echo "=== INSTALLING FRONTEND DEPENDENCIES ==="
-      cd ../frontend
-      npm install
-      
+      # Build frontend
       echo "=== BUILDING FRONTEND ==="
-      npm install -g @angular/cli@16.2.0
-      ng build --configuration production
+      cd frontend
+      npm run build -- --configuration production
+      
+      # Verify build
+      echo "=== VERIFYING BUILD ==="
+      if [ ! -d "dist/frontend" ]; then
+        echo "ERROR: Frontend build directory not found"
+        exit 1
+      fi
       
       echo "=== BUILD COMPLETED ==="
     startCommand: |
@@ -32,6 +36,8 @@ services:
         include:
           - backend/**
           - frontend/**
+          - package.json
+          - package-lock.json
         ignore:
           - **/node_modules/**
           - **/.git/**

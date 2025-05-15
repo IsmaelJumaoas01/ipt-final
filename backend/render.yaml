@@ -33,26 +33,17 @@ services:
       echo "=== INSTALLING FRONTEND DEPENDENCIES ==="
       npm install --legacy-peer-deps
       
-      # Explicitly install Angular build tools
-      echo "=== INSTALLING ANGULAR BUILD TOOLS ==="
-      npm install @angular-devkit/build-angular@16.2.0 --save-dev
-      npm install @angular/cli@16.2.0 --save-dev
-      npm install @angular/compiler-cli@16.2.0 --save-dev
-      npm install @angular-devkit/core@16.2.0 --save-dev
-      npm install @angular-devkit/schematics@16.2.0 --save-dev
-      npm install @schematics/angular@16.2.0 --save-dev
+      # Verify build tools
+      echo "=== VERIFYING BUILD TOOLS ==="
+      if [ ! -f "node_modules/@angular-devkit/build-angular/src/builders/browser/index.js" ]; then
+        echo "ERROR: Angular build tools not found"
+        echo "Installing build tools explicitly..."
+        npm install --save-dev @angular-devkit/build-angular@16.2.12
+      fi
       
-      # Verify Angular installation
-      echo "=== VERIFYING ANGULAR INSTALLATION ==="
-      npx ng version
-      
-      # List installed packages
-      echo "=== LISTING INSTALLED PACKAGES ==="
-      npm list @angular-devkit/build-angular
-      
-      # Build frontend with explicit path to ng
+      # Build frontend using direct node command
       echo "=== BUILDING FRONTEND APPLICATION ==="
-      ./node_modules/.bin/ng build --configuration production
+      node ./node_modules/@angular-devkit/build-angular/src/builders/browser/index.js --config=angular.json --project=frontend --configuration=production
       
       cd ..
       

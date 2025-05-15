@@ -3,9 +3,8 @@
     "version": "0.0.0",
     "scripts": {
         "ng": "ng",
-        "prebuild": "npm install @angular-devkit/build-angular@16.2.12 --save-dev",
         "start": "ng serve --open",
-        "build": "ng build --configuration production",
+        "build": "node ./node_modules/@angular-devkit/build-angular/src/builders/browser/index.js --config=angular.json --project=frontend --configuration=production",
         "test": "ng test",
         "lint": "ng lint",
         "e2e": "ng e2e"

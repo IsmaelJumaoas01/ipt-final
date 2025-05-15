@@ -30,13 +30,18 @@ services:
       rm -rf node_modules package-lock.json dist
       npm cache clean --force
       
-      # Install dependencies
+      # Install dependencies with specific versions
       echo "=== INSTALLING DEPENDENCIES ==="
-      npm install --legacy-peer-deps
+      npm install --legacy-peer-deps --no-package-lock
+      
+      # Verify webpack installation
+      echo "=== VERIFYING WEBPACK INSTALLATION ==="
+      ls -la node_modules/.bin/webpack
       
       # Build the application using webpack
       echo "=== BUILDING APPLICATION ==="
-      NODE_OPTIONS="--max_old_space_size=4096" npm run build
+      export PATH="$PATH:$(pwd)/node_modules/.bin"
+      NODE_ENV=production NODE_OPTIONS="--max_old_space_size=4096" webpack --mode production --config webpack.config.js
       
       cd ..
       

@@ -8,6 +8,17 @@ const errorHandler = require('_middleware/error-handler');
 const config = require('_helpers/config');
 const path = require('path');
 
+// Add this near the top of the file, after the requires
+console.log('Environment variables:', {
+    NODE_ENV: process.env.NODE_ENV,
+    DB_HOST: process.env.DB_HOST,
+    DB_PORT: process.env.DB_PORT,
+    DB_USER: process.env.DB_USER,
+    DB_NAME: process.env.DB_NAME,
+    // Don't log the actual password
+    hasDBPassword: !!process.env.DB_PASSWORD
+});
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());

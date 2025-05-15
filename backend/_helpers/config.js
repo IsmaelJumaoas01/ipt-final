@@ -1,11 +1,21 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+console.log('Current directory:', __dirname);
+console.log('Looking for .env file at:', path.join(__dirname, '../.env'));
+
 const defaultConfig = require('../config.json');
+console.log('Loaded default config from:', path.resolve(__dirname, '../config.json'));
 
 function getConfig() {
     // Helper function to get environment variable or fallback
     const getEnv = (key, fallback) => {
         const value = process.env[key];
-        console.log(`Loading ${key}:`, value || fallback); // Debug log
+        if (value === undefined) {
+            console.log(`Environment variable ${key} not found, using fallback:`, fallback);
+        } else {
+            console.log(`Found environment variable ${key}:`, key.includes('PASSWORD') ? '[HIDDEN]' : value);
+        }
         return value || fallback;
     };
 
@@ -38,10 +48,13 @@ function getConfig() {
         host: envConfig.database.host,
         port: envConfig.database.port,
         user: envConfig.database.user,
-        database: envConfig.database.database
+        database: envConfig.database.database,
+        hasPassword: !!envConfig.database.password
     });
 
     return envConfig;
 }
 
-module.exports = getConfig(); 
+const config = getConfig();
+console.log('Config loaded successfully');
+module.exports = config; 

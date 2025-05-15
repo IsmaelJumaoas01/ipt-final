@@ -15,20 +15,46 @@ services:
       # Build frontend
       echo "=== BUILDING FRONTEND ==="
       cd frontend
-      npm run build -- --configuration production
+      echo "Current directory:"
+      pwd
+      echo "Directory contents:"
+      ls -la
+      
+      # Install Angular CLI globally (needed for build)
+      echo "=== INSTALLING ANGULAR CLI ==="
+      npm install -g @angular/cli@16.2.0
+      
+      # Build frontend with production config
+      echo "=== RUNNING FRONTEND BUILD ==="
+      ng build --configuration production
       
       # Verify build
       echo "=== VERIFYING BUILD ==="
       if [ ! -d "dist/frontend" ]; then
         echo "ERROR: Frontend build directory not found"
+        echo "Current directory contents:"
+        ls -la
+        echo "dist directory contents (if exists):"
+        ls -la dist || echo "dist directory not found"
         exit 1
       fi
       
       echo "=== BUILD COMPLETED ==="
     startCommand: |
+      # Start the backend server
       cd backend
-      echo "=== STARTING SERVER ==="
-      NODE_ENV=production npm start
+      echo "=== STARTING BACKEND SERVER ==="
+      echo "Current directory:"
+      pwd
+      echo "Directory contents:"
+      ls -la
+      echo "Parent directory contents:"
+      ls -la ..
+      echo "Frontend dist contents:"
+      ls -la ../frontend/dist/frontend || echo "Frontend dist not found"
+      
+      # Start the server in production mode
+      NODE_ENV=production node server.js
     healthCheckPath: /api-docs
     autoDeploy: true
     buildFilter:

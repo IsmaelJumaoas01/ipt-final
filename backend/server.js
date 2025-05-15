@@ -49,7 +49,24 @@ app.use('/departments', require('./departments/index'));
 app.use('/requests', require('./requests/index'));
 app.use('/workflows', require('./workflows/index'));
 
-// swagger docs route - temporarily commented out
+// root route
+app.get('/', (req, res) => {
+    res.json({
+        name: 'IPT Final API',
+        version: '1.0.0',
+        status: 'running',
+        documentation: '/api-docs',
+        endpoints: {
+            accounts: '/accounts',
+            employees: '/employees',
+            departments: '/departments',
+            requests: '/requests',
+            workflows: '/workflows'
+        }
+    });
+});
+
+// swagger docs route
 app.use('/api-docs', require('_helpers/swagger'));
 
 // global error handler

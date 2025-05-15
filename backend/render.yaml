@@ -33,9 +33,14 @@ services:
       echo "=== INSTALLING FRONTEND DEPENDENCIES ==="
       npm install --legacy-peer-deps
       
-      # Install Angular CLI and build tools locally
-      echo "=== INSTALLING ANGULAR TOOLS ==="
-      npm install @angular/cli@16.2.0 @angular-devkit/build-angular@16.2.0 --save-dev
+      # Explicitly install Angular build tools
+      echo "=== INSTALLING ANGULAR BUILD TOOLS ==="
+      npm install @angular-devkit/build-angular@16.2.0 --save-dev
+      npm install @angular/cli@16.2.0 --save-dev
+      npm install @angular/compiler-cli@16.2.0 --save-dev
+      npm install @angular-devkit/core@16.2.0 --save-dev
+      npm install @angular-devkit/schematics@16.2.0 --save-dev
+      npm install @schematics/angular@16.2.0 --save-dev
       
       # Verify Angular installation
       echo "=== VERIFYING ANGULAR INSTALLATION ==="
@@ -45,9 +50,9 @@ services:
       echo "=== LISTING INSTALLED PACKAGES ==="
       npm list @angular-devkit/build-angular
       
-      # Build frontend
+      # Build frontend with explicit path to ng
       echo "=== BUILDING FRONTEND APPLICATION ==="
-      npx ng build --configuration production
+      ./node_modules/.bin/ng build --configuration production
       
       cd ..
       

@@ -9,27 +9,34 @@ services:
       
       echo "=== BUILD STARTED ==="
       echo "Current directory: $(pwd)"
-      echo "Directory contents:"
-      ls -la
       
-      # Install all dependencies using the root package.json script
-      echo "=== INSTALLING ALL DEPENDENCIES ==="
-      npm run install:all
+      # Install Node.js 18.x if not already installed
+      echo "=== SETTING UP NODE.JS ==="
+      if ! command -v nvm &> /dev/null; then
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+      fi
+      nvm install 18
+      nvm use 18
       
-      # Verify Angular CLI installation
-      echo "=== INSTALLING ANGULAR CLI ==="
-      npm install -g @angular/cli@16.2.0
+      # Install root dependencies
+      echo "=== INSTALLING ROOT DEPENDENCIES ==="
+      npm cache clean --force
+      npm install --legacy-peer-deps
       
       # Build frontend
       echo "=== BUILDING FRONTEND ==="
       cd frontend
       echo "Frontend directory: $(pwd)"
-      echo "Frontend directory contents:"
-      ls -la
       
-      # Build with production config
-      echo "Running ng build..."
-      NODE_OPTIONS="--max_old_space_size=4096" ng build --configuration production
+      # Clean and reinstall frontend dependencies
+      echo "=== CLEANING AND REINSTALLING FRONTEND ==="
+      npm run reinstall
+      
+      # Build with increased memory limit
+      echo "=== RUNNING ANGULAR BUILD ==="
+      NODE_OPTIONS="--max_old_space_size=4096" npm run build:prod
       
       # Verify build output
       echo "=== VERIFYING BUILD ==="

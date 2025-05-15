@@ -29,11 +29,28 @@ services:
       echo "=== CLEANING AND INSTALLING FRONTEND DEPENDENCIES ==="
       rm -rf node_modules package-lock.json dist
       npm cache clean --force
+      
+      # Install webpack and its dependencies first
+      echo "=== INSTALLING WEBPACK DEPENDENCIES ==="
+      npm install --save-dev --legacy-peer-deps \
+        webpack@5.89.0 \
+        webpack-cli@5.1.4 \
+        webpack-dev-server@4.15.1 \
+        ts-loader@9.5.1 \
+        html-loader@4.2.0 \
+        css-loader@6.8.1 \
+        mini-css-extract-plugin@2.7.6 \
+        html-webpack-plugin@5.5.3 \
+        copy-webpack-plugin@11.0.0 \
+        terser-webpack-plugin@5.3.9
+      
+      # Install remaining dependencies
+      echo "=== INSTALLING REMAINING DEPENDENCIES ==="
       npm install --legacy-peer-deps
       
       # Build the application using webpack
       echo "=== BUILDING APPLICATION ==="
-      NODE_OPTIONS="--max_old_space_size=4096" npm run build
+      NODE_OPTIONS="--max_old_space_size=4096" ./node_modules/.bin/webpack --mode production
       
       cd ..
       

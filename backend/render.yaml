@@ -25,7 +25,20 @@ services:
       echo "=== BUILDING FRONTEND ==="
       cd frontend
       
-      # Run the custom build script
+      # Clean and install dependencies
+      echo "=== CLEANING AND INSTALLING FRONTEND DEPENDENCIES ==="
+      rm -rf node_modules package-lock.json
+      npm install --legacy-peer-deps
+      
+      # Install Angular CLI globally
+      echo "=== INSTALLING ANGULAR CLI ==="
+      npm install -g @angular/cli@16.2.12
+      
+      # Verify Angular installation
+      echo "=== VERIFYING ANGULAR INSTALLATION ==="
+      ng version
+      
+      # Run the build script
       echo "=== RUNNING FRONTEND BUILD SCRIPT ==="
       node build.js
       

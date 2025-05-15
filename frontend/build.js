@@ -28,23 +28,6 @@ async function build() {
         fs.rmSync(distPath, { recursive: true, force: true });
     }
 
-    // Clean node_modules and package-lock.json
-    console.log('Cleaning node_modules...');
-    if (fs.existsSync(path.join(__dirname, 'node_modules'))) {
-        fs.rmSync(path.join(__dirname, 'node_modules'), { recursive: true, force: true });
-    }
-    if (fs.existsSync(path.join(__dirname, 'package-lock.json'))) {
-        fs.unlinkSync(path.join(__dirname, 'package-lock.json'));
-    }
-
-    // Install dependencies
-    console.log('Installing dependencies...');
-    runCommand('npm install --legacy-peer-deps');
-
-    // Install Angular CLI globally
-    console.log('Installing Angular CLI globally...');
-    runCommand('npm install -g @angular/cli@16.2.12');
-
     // Install specific Angular packages
     console.log('Installing Angular packages...');
     const angularPackages = [
@@ -70,17 +53,19 @@ async function build() {
     console.log('Verifying Angular installation...');
     runCommand('ng version');
 
-    // Create a temporary build script
+    // Create a temporary build script that uses the global ng command
     console.log('Creating temporary build script...');
     const buildScript = `
         const { execSync } = require('child_process');
-        const path = require('path');
         
-        // Get the path to the Angular CLI
-        const ngPath = path.join(__dirname, 'node_modules', '.bin', 'ng');
-        
-        // Run the build command
-        execSync(\`\${ngPath} build --configuration production\`, { stdio: 'inherit' });
+        // Use the global ng command
+        execSync('ng build --configuration production', { 
+            stdio: 'inherit',
+            env: {
+                ...process.env,
+                PATH: process.env.PATH + ':/opt/render/project/src/frontend/node_modules/.bin'
+            }
+        });
     `;
     
     fs.writeFileSync('temp-build.js', buildScript);

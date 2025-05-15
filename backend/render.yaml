@@ -4,7 +4,7 @@ services:
     env: node
     rootDir: .
     buildCommand: |
-      set -e  # Exit on any error
+      set -ex  # Exit on any error and print commands
       
       # Print initial directory structure
       echo "=== INITIAL DIRECTORY STRUCTURE ==="
@@ -29,12 +29,12 @@ services:
       echo "Removing existing node_modules and package-lock.json..."
       rm -rf node_modules package-lock.json
       echo "Running npm install..."
-      npm install
+      npm install --verbose
       
       # Build frontend with production config
       echo "=== BUILDING FRONTEND ==="
       echo "Running ng build..."
-      ng build --configuration production
+      NODE_OPTIONS="--max_old_space_size=4096" ng build --configuration production --verbose
       
       # Verify build output
       echo "=== VERIFYING BUILD OUTPUT ==="
@@ -43,6 +43,8 @@ services:
         echo "ERROR: dist directory not created"
         echo "Current directory contents:"
         ls -la
+        echo "npm list output:"
+        npm list
         exit 1
       fi
       
@@ -51,6 +53,8 @@ services:
         echo "ERROR: dist/frontend directory not created"
         echo "dist directory contents:"
         ls -la dist
+        echo "npm list output:"
+        npm list
         exit 1
       fi
       
@@ -59,6 +63,8 @@ services:
         echo "ERROR: index.html not found in dist/frontend"
         echo "dist/frontend contents:"
         ls -la dist/frontend
+        echo "npm list output:"
+        npm list
         exit 1
       fi
       
@@ -71,7 +77,7 @@ services:
       echo "Current directory:"
       pwd
       echo "Installing backend dependencies..."
-      npm install
+      npm install --verbose
       
       # Final verification
       echo "=== FINAL VERIFICATION ==="
@@ -88,6 +94,8 @@ services:
         echo "ERROR: Final verification failed - index.html not found"
         echo "Directory structure:"
         find . -type d -maxdepth 3
+        echo "npm list output from frontend:"
+        cd frontend && npm list
         exit 1
       fi
       
@@ -105,7 +113,8 @@ services:
       ls -la ../frontend
       echo "Frontend dist contents:"
       ls -la ../frontend/dist/frontend || echo "Frontend dist not found"
-      npm start
+      echo "=== STARTING NODE SERVER ==="
+      NODE_ENV=production npm start
     healthCheckPath: /api-docs
     autoDeploy: true
     buildFilter:

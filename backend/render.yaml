@@ -11,45 +11,35 @@ services:
       pwd
       ls -la
       
-      # Check if root package.json exists
-      echo "=== CHECKING ROOT PACKAGE.JSON ==="
-      if [ ! -f "package.json" ]; then
-        echo "ERROR: Root package.json not found. Please ensure it exists in the repository."
-        exit 1
-      else
-        echo "Root package.json found"
-        cat package.json
-      fi
-      
       # Install root dependencies
       echo "=== INSTALLING ROOT DEPENDENCIES ==="
       npm install --legacy-peer-deps
       
-      # Install Angular CLI globally
-      echo "=== INSTALLING ANGULAR CLI ==="
-      npm run install:angular
+      # Install frontend dependencies and build
+      echo "=== BUILDING FRONTEND ==="
+      cd frontend
+      npm install --legacy-peer-deps
+      npm run build -- --configuration production
+      cd ..
       
-      # Verify Angular CLI installation
-      echo "=== VERIFYING ANGULAR CLI ==="
-      ng version
-      
-      # Run the build script which will build both frontend and backend
-      echo "=== RUNNING BUILD SCRIPT ==="
-      npm run build
-      
-      # Verify the build
-      echo "=== VERIFYING BUILD ==="
+      # Verify frontend build
+      echo "=== VERIFYING FRONTEND BUILD ==="
       if [ ! -d "frontend/dist/frontend" ]; then
         echo "ERROR: Frontend build not found"
         echo "Directory contents:"
         ls -la
         echo "Frontend directory contents:"
         ls -la frontend
+        echo "Frontend dist contents:"
+        ls -la frontend/dist
         exit 1
       fi
       
-      echo "Frontend build found:"
-      ls -la frontend/dist/frontend
+      # Install backend dependencies
+      echo "=== INSTALLING BACKEND DEPENDENCIES ==="
+      cd backend
+      npm install --legacy-peer-deps
+      cd ..
       
       echo "=== BUILD COMPLETED SUCCESSFULLY ==="
     startCommand: |

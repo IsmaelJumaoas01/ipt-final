@@ -9,37 +9,70 @@ initialize();
 async function initialize() {
     try {
         const { host, port, user, password, database } = config.database;
-        console.log('Connecting to database with config:', { host, port, user, database });
+        console.log('Database connection details:', { 
+            host, 
+            port, 
+            user, 
+            database,
+            // Don't log the actual password
+            hasPassword: !!password 
+        });
         
+        // Test the connection first
+        console.log('Attempting to connect to MySQL server...');
         const connection = await mysql.createConnection({ 
             host, 
             port, 
             user, 
             password,
-            connectTimeout: 10000
+            connectTimeout: 10000,
+            // Add SSL if needed
+            ssl: {
+                rejectUnauthorized: false
+            }
         });
         
-        console.log('Connected to MySQL server');
+        console.log('Successfully connected to MySQL server');
         
+        // Create database if it doesn't exist
+        console.log(`Creating database ${database} if it doesn't exist...`);
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
-        console.log(`Database ${database} created or already exists`);
+        console.log(`Database ${database} is ready`);
         
+        // Close the initial connection
+        await connection.end();
+        
+        // Create Sequelize instance
+        console.log('Initializing Sequelize...');
         const sequelize = new Sequelize(database, user, password, { 
             host,
             port,
             dialect: 'mysql',
-            logging: false
+            logging: false,
+            // Add SSL if needed
+            dialectOptions: {
+                ssl: {
+                    rejectUnauthorized: false
+                }
+            }
         });
         
+        // Test Sequelize connection
+        await sequelize.authenticate();
+        console.log('Sequelize connection established successfully');
+        
+        // Initialize models
+        console.log('Initializing models...');
         db.Account = require('../accounts/account.model')(sequelize);
         db.RefreshToken = require('../accounts/refresh-token.model')(sequelize);
-        
         db.Employee = require('../employees/employee.model')(sequelize);
         db.Department = require('../departments/department.model')(sequelize);
         db.Request = require('../requests/request.model')(sequelize);
         db.RequestItem = require('../requests/request-item.model')(sequelize);
         db.Workflow = require('../workflows/workflow.model')(sequelize);
         
+        // Set up associations
+        console.log('Setting up model associations...');
         db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
         db.RefreshToken.belongsTo(db.Account);
 
@@ -54,12 +87,26 @@ async function initialize() {
         db.Workflow.belongsTo(db.Employee, { foreignKey: 'employeeId', as: 'employee' });
         db.Employee.hasMany(db.Workflow, { foreignKey: 'employeeId', as: 'workflows' });
 
+        // Sync database
+        console.log('Syncing database...');
         await sequelize.sync({ alter: true });
+        console.log('Database sync completed');
         
+        // Seed data if needed
+        console.log('Seeding database...');
         const seedData = require('./seed-data');
         await seedData.seedDatabase();
+        console.log('Database seeding completed');
+        
+        console.log('Database initialization completed successfully');
     } catch (error) {
         console.error('Database initialization error:', error);
+        console.error('Error details:', {
+            code: error.code,
+            errno: error.errno,
+            sqlState: error.sqlState,
+            sqlMessage: error.sqlMessage
+        });
         throw error;
     }
 }

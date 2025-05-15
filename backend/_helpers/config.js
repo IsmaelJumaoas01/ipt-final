@@ -1,36 +1,45 @@
-const config = require('config.json');
 require('dotenv').config();
+const defaultConfig = require('../config.json');
 
 function getConfig() {
     // Helper function to get environment variable or fallback
     const getEnv = (key, fallback) => {
-        return process.env[key] || fallback;
+        const value = process.env[key];
+        console.log(`Loading ${key}:`, value || fallback); // Debug log
+        return value || fallback;
     };
 
     // Override config with environment variables
     const envConfig = {
         database: {
-            host: getEnv('DB_HOST', config.database.host),
-            port: parseInt(getEnv('DB_PORT', config.database.port)),
-            user: getEnv('DB_USER', config.database.user),
-            password: getEnv('DB_PASSWORD', config.database.password),
-            database: getEnv('DB_NAME', config.database.database)
+            host: getEnv('DB_HOST', defaultConfig.database.host),
+            port: parseInt(getEnv('DB_PORT', defaultConfig.database.port)),
+            user: getEnv('DB_USER', defaultConfig.database.user),
+            password: getEnv('DB_PASSWORD', defaultConfig.database.password),
+            database: getEnv('DB_NAME', defaultConfig.database.database)
         },
-        secret: getEnv('JWT_SECRET', config.secret),
-        emailFrom: getEnv('EMAIL_FROM', config.emailFrom),
+        secret: getEnv('JWT_SECRET', defaultConfig.secret),
+        emailFrom: getEnv('EMAIL_FROM', defaultConfig.emailFrom),
         smtpOptions: {
-            host: getEnv('SMTP_HOST', config.smtpOptions.host),
-            port: parseInt(getEnv('SMTP_PORT', config.smtpOptions.port)),
+            host: getEnv('SMTP_HOST', defaultConfig.smtpOptions.host),
+            port: parseInt(getEnv('SMTP_PORT', defaultConfig.smtpOptions.port)),
             auth: {
-                user: getEnv('SMTP_USER', config.smtpOptions.auth.user),
-                pass: getEnv('SMTP_PASS', config.smtpOptions.auth.pass)
+                user: getEnv('SMTP_USER', defaultConfig.smtpOptions.auth.user),
+                pass: getEnv('SMTP_PASS', defaultConfig.smtpOptions.auth.pass)
             }
         },
         frontendUrls: {
-            development: getEnv('FRONTEND_URL', config.frontendUrls.development),
-            production: getEnv('PRODUCTION_FRONTEND_URL', config.frontendUrls.production)
+            development: getEnv('FRONTEND_URL', defaultConfig.frontendUrls.development),
+            production: getEnv('PRODUCTION_FRONTEND_URL', defaultConfig.frontendUrls.production)
         }
     };
+
+    console.log('Final database config:', {
+        host: envConfig.database.host,
+        port: envConfig.database.port,
+        user: envConfig.database.user,
+        database: envConfig.database.database
+    });
 
     return envConfig;
 }

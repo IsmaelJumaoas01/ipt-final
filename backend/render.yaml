@@ -3,13 +3,12 @@ services:
   - type: web
     name: ipt-final-api
     env: node
-    # Only build backend dependencies
-    buildCommand: npm install --legacy-peer-deps
+    # Build command that properly handles frontend and backend
+    buildCommand: cd ../frontend && npm install --legacy-peer-deps && npm run build && cd ../backend && npm install --legacy-peer-deps
     startCommand: npm start
     healthCheckPath: /api-docs
     autoDeploy: true
-    # Note: Frontend should be deployed separately to a static hosting service
-    # or as a separate Render service
+    # Note: Frontend is built as part of the backend service
     envVars:
       - key: NODE_ENV
         value: production

@@ -42,7 +42,7 @@ services:
       
       # Build with increased memory limit
       echo "=== RUNNING ANGULAR BUILD ==="
-      NODE_OPTIONS="--max_old_space_size=4096" npm run build
+      NODE_OPTIONS="--max_old_space_size=4096" node node_modules/@angular/cli/bin/ng build --configuration production
       
       # Verify build output
       echo "=== VERIFYING BUILD ==="

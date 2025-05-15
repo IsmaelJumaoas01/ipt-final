@@ -4,7 +4,8 @@
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
-        "build": "ng build --configuration production --aot --build-optimizer --vendor-chunk --progress",
+        "prebuild": "npm install @angular-devkit/build-angular@16.2.12 --save-dev",
+        "build": "ng build --configuration production --aot --build-optimizer --vendor-chunk --progress --verbose",
         "test": "ng test",
         "lint": "ng lint"
     },

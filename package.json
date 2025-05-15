@@ -10,7 +10,7 @@
     "start:frontend": "cd frontend && npm start",
     "start": "cd backend && npm start",
     "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "render:build": "npm run install:all && cd frontend && npm run build",
+    "render:build": "npm run install:all && cd frontend && npm install @angular-devkit/build-angular@16.2.12 --save-dev && npm run build",
     "render:start": "cd backend && npm start"
   },
   "dependencies": {

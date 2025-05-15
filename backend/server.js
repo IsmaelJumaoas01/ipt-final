@@ -43,13 +43,14 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Serve static files from the frontend build directory
-// In production, the frontend files are in ../frontend/dist/frontend
-const frontendPath = process.env.NODE_ENV === 'production' 
-    ? path.join(__dirname, '../frontend/dist/frontend')
-    : path.join(__dirname, '../frontend/dist/frontend');
+// Get the root directory (where both frontend and backend folders are)
+const rootDir = path.join(__dirname, '..');
+const frontendPath = path.join(rootDir, 'frontend', 'dist', 'frontend');
 
-console.log('Serving frontend from:', frontendPath);
+console.log('Root directory:', rootDir);
+console.log('Frontend path:', frontendPath);
+
+// Serve static files from the frontend build directory
 app.use(express.static(frontendPath));
 
 // api routes
@@ -68,11 +69,30 @@ app.use(errorHandler);
 // Handle frontend routes - must be after API routes
 app.get('*', (req, res) => {
     const indexPath = path.join(frontendPath, 'index.html');
+    console.log('Current directory:', __dirname);
+    console.log('Root directory:', rootDir);
+    console.log('Frontend path:', frontendPath);
     console.log('Serving index.html from:', indexPath);
+    
+    // Check if the file exists before trying to serve it
+    const fs = require('fs');
+    if (!fs.existsSync(frontendPath)) {
+        console.error('Frontend directory does not exist:', frontendPath);
+        console.error('Directory contents of root:', fs.readdirSync(rootDir));
+        return res.status(500).send('Frontend build not found. Please check the build process.');
+    }
+    
+    if (!fs.existsSync(indexPath)) {
+        console.error('index.html does not exist in:', frontendPath);
+        console.error('Frontend directory contents:', fs.readdirSync(frontendPath));
+        return res.status(500).send('Frontend index.html not found. Please check the build process.');
+    }
+    
     res.sendFile(indexPath, (err) => {
         if (err) {
             console.error('Error serving index.html:', err);
             console.error('Current directory:', __dirname);
+            console.error('Root directory:', rootDir);
             console.error('Frontend path:', frontendPath);
             console.error('Full index path:', indexPath);
             res.status(500).send('Error loading frontend application');
@@ -85,5 +105,6 @@ const port = process.env.NODE_ENV === 'production' ? (process.env.PORT || 80) : 
 app.listen(port, () => {
     console.log('Server listening on port ' + port);
     console.log('Current directory:', __dirname);
+    console.log('Root directory:', rootDir);
     console.log('Frontend path:', frontendPath);
 });

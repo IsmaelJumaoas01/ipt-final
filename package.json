@@ -14,7 +14,7 @@
     "start:frontend": "cd frontend && npm start",
     "start": "cd backend && npm start",
     "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "render:build": "cd frontend && npm install --legacy-peer-deps && npm install -g @angular/cli@16.2.12 && NODE_ENV=production NODE_OPTIONS='--max_old_space_size=4096' ng build --configuration production && cd ../backend && npm install --legacy-peer-deps",
+    "render:build": "echo '=== Testing Angular CLI ===' && ng version && echo '=== Installing Frontend Dependencies ===' && cd frontend && npm install --legacy-peer-deps && echo '=== Building Frontend ===' && ng build --configuration production && echo '=== Installing Backend Dependencies ===' && cd ../backend && npm install --legacy-peer-deps",
     "render:start": "cd backend && npm start"
   },
   "dependencies": {

@@ -3,6 +3,7 @@ services:
     name: ipt-final-api
     env: node
     rootDir: .
+    nodeVersion: 18.17.0
     buildCommand: |
       set -ex  # Exit on any error and print commands
       
@@ -11,15 +12,43 @@ services:
       pwd
       ls -la
       
+      # Print Node.js version
+      echo "=== NODE VERSION ==="
+      node --version
+      npm --version
+      
       # Install root dependencies
       echo "=== INSTALLING ROOT DEPENDENCIES ==="
       npm install --legacy-peer-deps
       
-      # Install frontend dependencies and build
+      # Install and build frontend
       echo "=== BUILDING FRONTEND ==="
       cd frontend
+      
+      # Clean install
+      echo "=== CLEANING FRONTEND NODE_MODULES ==="
+      rm -rf node_modules package-lock.json
+      
+      # Install frontend dependencies
+      echo "=== INSTALLING FRONTEND DEPENDENCIES ==="
       npm install --legacy-peer-deps
-      npm run build -- --configuration production
+      
+      # Install Angular CLI and build tools locally
+      echo "=== INSTALLING ANGULAR TOOLS ==="
+      npm install @angular/cli@16.2.0 @angular-devkit/build-angular@16.2.0 --save-dev
+      
+      # Verify Angular installation
+      echo "=== VERIFYING ANGULAR INSTALLATION ==="
+      npx ng version
+      
+      # List installed packages
+      echo "=== LISTING INSTALLED PACKAGES ==="
+      npm list @angular-devkit/build-angular
+      
+      # Build frontend
+      echo "=== BUILDING FRONTEND APPLICATION ==="
+      npx ng build --configuration production
+      
       cd ..
       
       # Verify frontend build

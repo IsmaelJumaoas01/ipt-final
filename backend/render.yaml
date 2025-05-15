@@ -30,33 +30,119 @@ services:
       rm -rf node_modules package-lock.json dist
       npm cache clean --force
       
-      # Install dependencies with specific versions
-      echo "=== INSTALLING DEPENDENCIES ==="
+      # Install webpack and dependencies directly
+      echo "=== INSTALLING WEBPACK AND DEPENDENCIES ==="
+      npm install --save-dev --legacy-peer-deps --no-package-lock \
+        webpack@5.89.0 \
+        webpack-cli@5.1.4 \
+        webpack-dev-server@4.15.1 \
+        @babel/core@7.23.5 \
+        @babel/preset-env@7.23.5 \
+        @babel/preset-typescript@7.23.3 \
+        babel-loader@9.1.3 \
+        ts-loader@9.5.1 \
+        style-loader@3.3.3 \
+        css-loader@6.8.1 \
+        less-loader@11.1.3 \
+        less@4.2.0
+      
+      # Install remaining dependencies
+      echo "=== INSTALLING REMAINING DEPENDENCIES ==="
       npm install --legacy-peer-deps --no-package-lock
       
-      # Verify webpack installation
-      echo "=== VERIFYING WEBPACK INSTALLATION ==="
+      # Verify installations
+      echo "=== VERIFYING INSTALLATIONS ==="
       npm list webpack
       npm list webpack-cli
       
-      # Build the application using webpack
+      # Create webpack config if it doesn't exist
+      echo "=== ENSURING WEBPACK CONFIG ==="
+      if [ ! -f "webpack.config.js" ]; then
+        echo "Creating webpack.config.js..."
+        cat > webpack.config.js << 'EOL'
+const path = require('path');
+const webpack = require('webpack');
+
+module.exports = {
+    entry: './src/main.ts',
+    output: {
+        path: path.resolve(__dirname, 'dist/frontend'),
+        filename: '[name].[contenthash].js',
+        clean: true
+    },
+    resolve: {
+        extensions: ['.ts', '.js'],
+        modules: [path.resolve(__dirname, 'src'), 'node_modules']
+    },
+    module: {
+        rules: [
+            {
+                test: /\.ts$/,
+                use: [
+                    {
+                        loader: 'ts-loader',
+                        options: {
+                            configFile: 'tsconfig.app.json',
+                            transpileOnly: true
+                        }
+                    }
+                ],
+                exclude: /node_modules/
+            },
+            {
+                test: /\.less$/,
+                use: ['style-loader', 'css-loader', 'less-loader']
+            },
+            {
+                test: /\.css$/,
+                use: ['style-loader', 'css-loader']
+            },
+            {
+                test: /\.(png|svg|jpg|jpeg|gif|ico)$/,
+                type: 'asset/resource'
+            },
+            {
+                test: /\.(woff|woff2|eot|ttf|otf)$/,
+                type: 'asset/resource'
+            }
+        ]
+    },
+    plugins: [
+        new webpack.DefinePlugin({
+            'process.env.NODE_ENV': JSON.stringify('production')
+        })
+    ],
+    optimization: {
+        splitChunks: {
+            chunks: 'all',
+            minSize: 20000,
+            minChunks: 1,
+            maxAsyncRequests: 30,
+            maxInitialRequests: 30,
+            cacheGroups: {
+                defaultVendors: {
+                    test: /[\\/]node_modules[\\/]/,
+                    priority: -10,
+                    reuseExistingChunk: true
+                },
+                default: {
+                    minChunks: 2,
+                    priority: -20,
+                    reuseExistingChunk: true
+                }
+            }
+        }
+    }
+};
+EOL
+      fi
+      
+      # Build the application directly with webpack
       echo "=== BUILDING APPLICATION ==="
-      NODE_ENV=production NODE_OPTIONS="--max_old_space_size=4096" npx webpack --mode production --config webpack.config.js
+      NODE_ENV=production NODE_OPTIONS="--max_old_space_size=4096" \
+      ./node_modules/.bin/webpack --mode production --config webpack.config.js
       
       cd ..
-      
-      # Verify frontend build
-      echo "=== VERIFYING FRONTEND BUILD ==="
-      if [ ! -d "frontend/dist/frontend" ]; then
-        echo "ERROR: Frontend build not found"
-        echo "Directory contents:"
-        ls -la
-        echo "Frontend directory contents:"
-        ls -la frontend
-        echo "Frontend dist contents:"
-        ls -la frontend/dist
-        exit 1
-      fi
       
       # Install backend dependencies
       echo "=== INSTALLING BACKEND DEPENDENCIES ==="

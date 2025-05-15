@@ -36,7 +36,7 @@ services:
       
       # Build with increased memory limit
       echo "=== RUNNING ANGULAR BUILD ==="
-      NODE_OPTIONS="--max_old_space_size=4096" npx ng build --configuration production
+      NODE_OPTIONS="--max_old_space_size=4096" ./node_modules/.bin/ng build --configuration production
       
       # Verify build output
       echo "=== VERIFYING BUILD ==="

@@ -30,19 +30,21 @@ services:
       rm -rf node_modules package-lock.json dist
       npm cache clean --force
       
-      # Install Vite and its dependencies first
-      echo "=== INSTALLING VITE DEPENDENCIES ==="
-      npm install --save-dev --legacy-peer-deps \
-        vite@4.5.0 \
-        @vitejs/plugin-angular@2.0.0
+      # Install Angular CLI globally
+      echo "=== INSTALLING ANGULAR CLI ==="
+      npm install -g @angular/cli@16.2.12
       
-      # Install remaining dependencies
-      echo "=== INSTALLING REMAINING DEPENDENCIES ==="
+      # Install dependencies
+      echo "=== INSTALLING DEPENDENCIES ==="
       npm install --legacy-peer-deps
       
-      # Build the application using Vite
+      # Verify Angular installation
+      echo "=== VERIFYING ANGULAR INSTALLATION ==="
+      ng version
+      
+      # Build the application
       echo "=== BUILDING APPLICATION ==="
-      NODE_OPTIONS="--max_old_space_size=4096" ./node_modules/.bin/vite build
+      NODE_OPTIONS="--max_old_space_size=4096" ng build --configuration production --aot --build-optimizer --vendor-chunk --progress
       
       cd ..
       

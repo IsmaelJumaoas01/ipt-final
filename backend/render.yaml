@@ -6,11 +6,26 @@ services:
     buildCommand: |
       # Install dependencies for both frontend and backend
       npm install -g @angular/cli
+      # Build frontend
       cd frontend && npm install && npm run build -- --configuration production
-      cd ../backend && npm install
-      # Move frontend build to the correct location
-      mkdir -p backend/frontend-dist
-      cp -r frontend/dist/frontend/* backend/frontend-dist/
+      # Verify frontend build
+      if [ ! -d "dist/frontend" ]; then
+        echo "Frontend build failed - dist/frontend directory not found"
+        exit 1
+      fi
+      # Create backend/frontend-dist if it doesn't exist
+      cd .. && mkdir -p backend/frontend-dist
+      # Copy frontend build files with verbose output
+      echo "Copying frontend build files..."
+      cp -rv frontend/dist/frontend/* backend/frontend-dist/
+      # Verify the copy
+      if [ ! -f "backend/frontend-dist/index.html" ]; then
+        echo "Failed to copy frontend files - index.html not found"
+        exit 1
+      fi
+      echo "Frontend files copied successfully"
+      # Install backend dependencies
+      cd backend && npm install
     startCommand: cd backend && npm start
     healthCheckPath: /api-docs
     autoDeploy: true

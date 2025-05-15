@@ -10,7 +10,8 @@
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend && npm start",
     "clean:frontend": "cd frontend && npx rimraf node_modules package-lock.json .angular/cache",
-    "build:frontend": "npm run clean:frontend && cd frontend && npm cache clean --force && npm install --legacy-peer-deps && npm run build -- --configuration production",
+    "install:angular": "cd frontend && npm install @angular/cli@16.2.12 @angular-devkit/build-angular@16.2.12 --save-dev --legacy-peer-deps",
+    "build:frontend": "npm run clean:frontend && cd frontend && npm cache clean --force && npm install --legacy-peer-deps && npm run install:angular && npm run build -- --configuration production",
     "build": "npm run install:all && npm run build:frontend",
     "start": "pm2 start ecosystem.config.js --env production"
   },

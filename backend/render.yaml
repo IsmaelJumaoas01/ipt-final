@@ -21,82 +21,27 @@ services:
         cat package.json
       fi
       
-      # Install all dependencies including concurrently in root
-      echo "=== INSTALLING ALL DEPENDENCIES ==="
-      npm run install:all
+      # Install root dependencies
+      echo "=== INSTALLING ROOT DEPENDENCIES ==="
+      npm install --legacy-peer-deps
       
-      # Install Angular CLI globally
-      echo "=== INSTALLING ANGULAR CLI ==="
-      npm install -g @angular/cli@16.2.0
-      ng version
+      # Run the build script which will build both frontend and backend
+      echo "=== RUNNING BUILD SCRIPT ==="
+      npm run build
       
-      # Build frontend
-      echo "=== STARTING FRONTEND BUILD ==="
-      cd frontend
-      echo "Current directory:"
-      pwd
-      echo "Frontend directory contents:"
-      ls -la
-      
-      # Build frontend with production config
-      echo "=== BUILDING FRONTEND ==="
-      echo "Running ng build..."
-      NODE_OPTIONS="--max_old_space_size=4096" ng build --configuration production --verbose
-      
-      # Verify build output
-      echo "=== VERIFYING BUILD OUTPUT ==="
-      echo "Checking dist directory..."
-      if [ ! -d "dist" ]; then
-        echo "ERROR: dist directory not created"
-        echo "Current directory contents:"
+      # Verify the build
+      echo "=== VERIFYING BUILD ==="
+      if [ ! -d "frontend/dist/frontend" ]; then
+        echo "ERROR: Frontend build not found"
+        echo "Directory contents:"
         ls -la
-        echo "npm list output:"
-        npm list
+        echo "Frontend directory contents:"
+        ls -la frontend
         exit 1
       fi
       
-      echo "Checking dist/frontend directory..."
-      if [ ! -d "dist/frontend" ]; then
-        echo "ERROR: dist/frontend directory not created"
-        echo "dist directory contents:"
-        ls -la dist
-        echo "npm list output:"
-        npm list
-        exit 1
-      fi
-      
-      echo "Checking for index.html..."
-      if [ ! -f "dist/frontend/index.html" ]; then
-        echo "ERROR: index.html not found in dist/frontend"
-        echo "dist/frontend contents:"
-        ls -la dist/frontend
-        echo "npm list output:"
-        npm list
-        exit 1
-      fi
-      
-      echo "Frontend build contents:"
-      ls -la dist/frontend
-      
-      # Final verification
-      echo "=== FINAL VERIFICATION ==="
-      cd ..
-      echo "Root directory contents:"
-      ls -la
-      echo "Frontend directory contents:"
-      ls -la frontend
-      echo "Frontend dist contents:"
+      echo "Frontend build found:"
       ls -la frontend/dist/frontend
-      
-      # One last check
-      if [ ! -f "frontend/dist/frontend/index.html" ]; then
-        echo "ERROR: Final verification failed - index.html not found"
-        echo "Directory structure:"
-        find . -type d -maxdepth 3
-        echo "npm list output from frontend:"
-        cd frontend && npm list
-        exit 1
-      fi
       
       echo "=== BUILD COMPLETED SUCCESSFULLY ==="
     startCommand: |
@@ -106,15 +51,23 @@ services:
       echo "Directory contents:"
       ls -la
       
-      # Verify concurrently is installed
-      echo "=== VERIFYING CONCURRENTLY INSTALLATION ==="
-      if [ ! -f "node_modules/.bin/concurrently" ]; then
-        echo "ERROR: concurrently not found in node_modules/.bin"
-        echo "Installing concurrently..."
-        npm install concurrently --legacy-peer-deps
+      # Verify frontend build exists
+      echo "=== VERIFYING FRONTEND BUILD ==="
+      if [ ! -d "frontend/dist/frontend" ]; then
+        echo "ERROR: Frontend build not found"
+        echo "Current directory contents:"
+        ls -la
+        echo "Frontend directory contents:"
+        ls -la frontend
+        exit 1
       fi
       
+      echo "Frontend build found:"
+      ls -la frontend/dist/frontend
+      
+      # Start the server
       echo "=== STARTING APPLICATION ==="
+      cd backend
       NODE_ENV=production npm start
     healthCheckPath: /api-docs
     autoDeploy: true

@@ -4,29 +4,65 @@ services:
     env: node
     rootDir: .
     buildCommand: |
+      # Print current directory for debugging
+      pwd
+      ls -la
+      
       # Install dependencies for both frontend and backend
       npm install -g @angular/cli
+      
       # Build frontend
-      cd frontend && npm install && npm run build -- --configuration production
-      # Verify frontend build
-      if [ ! -d "dist/frontend" ]; then
-        echo "Frontend build failed - dist/frontend directory not found"
-        exit 1
-      fi
-      # Create backend/frontend-dist if it doesn't exist
-      cd .. && mkdir -p backend/frontend-dist
-      # Copy frontend build files with verbose output
-      echo "Copying frontend build files..."
+      echo "Building frontend..."
+      cd frontend
+      npm install
+      npm run build -- --configuration production
+      
+      # Print frontend build directory contents
+      echo "Frontend build directory contents:"
+      ls -la dist/frontend
+      
+      # Go back to root and create the target directory
+      cd ..
+      echo "Creating frontend-dist directory..."
+      mkdir -p backend/frontend-dist
+      
+      # Copy frontend build files
+      echo "Copying frontend files..."
       cp -rv frontend/dist/frontend/* backend/frontend-dist/
+      
       # Verify the copy
+      echo "Verifying copied files..."
+      ls -la backend/frontend-dist
+      
       if [ ! -f "backend/frontend-dist/index.html" ]; then
-        echo "Failed to copy frontend files - index.html not found"
+        echo "ERROR: index.html not found in backend/frontend-dist"
+        echo "Current directory structure:"
+        pwd
+        ls -la
+        echo "Frontend dist contents:"
+        ls -la frontend/dist/frontend
+        echo "Backend frontend-dist contents:"
+        ls -la backend/frontend-dist
         exit 1
       fi
-      echo "Frontend files copied successfully"
+      
       # Install backend dependencies
-      cd backend && npm install
-    startCommand: cd backend && npm start
+      echo "Installing backend dependencies..."
+      cd backend
+      npm install
+      
+      # Final verification
+      echo "Final directory structure:"
+      pwd
+      ls -la
+      ls -la frontend-dist
+    startCommand: |
+      cd backend
+      echo "Starting server from directory:"
+      pwd
+      ls -la
+      ls -la frontend-dist
+      npm start
     healthCheckPath: /api-docs
     autoDeploy: true
     buildFilter:

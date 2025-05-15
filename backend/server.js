@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const errorHandler = require('_middleware/error-handler');
 const config = require('_helpers/config');
+const path = require('path');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -42,35 +43,26 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// api routes
-app.use('/accounts', require('./accounts/accounts.controller'));
-app.use('/employees', require('./employees/index'));
-app.use('/departments', require('./departments/index'));
-app.use('/requests', require('./requests/index'));
-app.use('/workflows', require('./workflows/index'));
+// Serve static files from the frontend build directory
+app.use(express.static(path.join(__dirname, '../frontend/dist/frontend')));
 
-// root route
-app.get('/', (req, res) => {
-    res.json({
-        name: 'IPT Final API',
-        version: '1.0.0',
-        status: 'running',
-        documentation: '/api-docs',
-        endpoints: {
-            accounts: '/accounts',
-            employees: '/employees',
-            departments: '/departments',
-            requests: '/requests',
-            workflows: '/workflows'
-        }
-    });
-});
+// api routes
+app.use('/api/accounts', require('./accounts/accounts.controller'));
+app.use('/api/employees', require('./employees/index'));
+app.use('/api/departments', require('./departments/index'));
+app.use('/api/requests', require('./requests/index'));
+app.use('/api/workflows', require('./workflows/index'));
 
 // swagger docs route
 app.use('/api-docs', require('_helpers/swagger'));
 
 // global error handler
 app.use(errorHandler);
+
+// Handle frontend routes - must be after API routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist/frontend/index.html'));
+});
 
 // start server
 const port = process.env.NODE_ENV === 'production' ? (process.env.PORT || 80) : 4000;

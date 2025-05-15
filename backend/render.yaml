@@ -45,11 +45,11 @@ services:
       
       # Verify Angular installation
       echo "=== VERIFYING ANGULAR INSTALLATION ==="
-      ng version
+      npx ng version
       
-      # Build the application with explicit path to node_modules
+      # Build the application using npx
       echo "=== BUILDING APPLICATION ==="
-      NODE_OPTIONS="--max_old_space_size=4096" ./node_modules/.bin/ng build --configuration production --aot --build-optimizer --vendor-chunk --progress
+      NODE_OPTIONS="--max_old_space_size=4096" npx ng build --configuration production --aot --build-optimizer --vendor-chunk --progress
       
       cd ..
       

@@ -2,17 +2,17 @@ services:
   - type: web
     name: ipt-final-api
     env: node
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: npm start
+    rootDir: .
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
     healthCheckPath: /api-docs
     autoDeploy: true
     buildFilter:
       paths:
         include:
           - backend/**
-        ignore:
           - frontend/**
+        ignore:
           - **/node_modules/**
           - **/.git/**
           - **/.env

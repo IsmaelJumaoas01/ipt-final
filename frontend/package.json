@@ -4,7 +4,7 @@
     "scripts": {
         "ng": "ng",
         "start": "ng serve --open",
-        "build": "node ./node_modules/@angular-devkit/build-angular/src/builders/browser/index.js --config=angular.json --project=frontend --configuration=production",
+        "build": "node build.js",
         "test": "ng test",
         "lint": "ng lint",
         "e2e": "ng e2e"

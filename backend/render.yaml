@@ -25,25 +25,9 @@ services:
       echo "=== BUILDING FRONTEND ==="
       cd frontend
       
-      # Clean install
-      echo "=== CLEANING FRONTEND NODE_MODULES ==="
-      rm -rf node_modules package-lock.json
-      
-      # Install frontend dependencies
-      echo "=== INSTALLING FRONTEND DEPENDENCIES ==="
-      npm install --legacy-peer-deps
-      
-      # Verify build tools
-      echo "=== VERIFYING BUILD TOOLS ==="
-      if [ ! -f "node_modules/@angular-devkit/build-angular/src/builders/browser/index.js" ]; then
-        echo "ERROR: Angular build tools not found"
-        echo "Installing build tools explicitly..."
-        npm install --save-dev @angular-devkit/build-angular@16.2.12
-      fi
-      
-      # Build frontend using direct node command
-      echo "=== BUILDING FRONTEND APPLICATION ==="
-      node ./node_modules/@angular-devkit/build-angular/src/builders/browser/index.js --config=angular.json --project=frontend --configuration=production
+      # Run the custom build script
+      echo "=== RUNNING FRONTEND BUILD SCRIPT ==="
+      node build.js
       
       cd ..
       

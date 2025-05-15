@@ -25,6 +25,14 @@ services:
       echo "=== INSTALLING ROOT DEPENDENCIES ==="
       npm install --legacy-peer-deps
       
+      # Install Angular CLI globally
+      echo "=== INSTALLING ANGULAR CLI ==="
+      npm run install:angular
+      
+      # Verify Angular CLI installation
+      echo "=== VERIFYING ANGULAR CLI ==="
+      ng version
+      
       # Run the build script which will build both frontend and backend
       echo "=== RUNNING BUILD SCRIPT ==="
       npm run build

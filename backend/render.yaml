@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: ipt-final-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        value: 153.92.15.31
+      - key: DB_USER
+        value: u875409848_jumaoas
+      - key: DB_PASSWORD
+        sync: false  # This will be set manually in Render dashboard
+      - key: DB_NAME
+        value: u875409848_jumaoas
+      - key: JWT_SECRET
+        generateValue: true  # Render will generate a secure random value
+      - key: PORT
+        value: 10000
+      - key: PRODUCTION_FRONTEND_URL
+        value: https://your-frontend-domain.vercel.app  # Update this after deploying frontend 

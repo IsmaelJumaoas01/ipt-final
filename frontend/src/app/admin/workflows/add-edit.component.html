@@ -47,18 +47,8 @@
             </div>
             
             <div class="form-group mb-3">
-                <label for="task">Task</label>
-                <input type="text" class="form-control" [(ngModel)]="workflow.details.task" name="task" id="task" placeholder="Enter task description" required />
-            </div>
-            
-            <div class="form-group mb-3">
-                <label for="date">Date</label>
-                <input type="date" class="form-control" [(ngModel)]="workflow.details.date" name="date" id="date" required />
-            </div>
-            
-            <div class="form-group mb-3">
-                <label for="notes">Notes</label>
-                <textarea class="form-control" [(ngModel)]="workflow.details.notes" name="notes" id="notes" rows="3" placeholder="Additional notes"></textarea>
+                <label for="description">Description</label>
+                <input type="text" class="form-control" [(ngModel)]="workflow.details.description" name="description" id="description" placeholder="Enter workflow description" required />
             </div>
             
             <div class="form-group">

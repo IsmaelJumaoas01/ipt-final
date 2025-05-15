@@ -16,11 +16,11 @@ export class AuthGuard {
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | boolean {
         // Define all account routes that should bypass authentication
         const accountRoutes = [
-            '/account/',
-            '/register',
-            '/verify-email',
-            '/reset-password',
-            '/forgot-password'
+            '/account/login',
+            '/account/register',
+            '/account/verify-email',
+            '/account/reset-password',
+            '/account/forgot-password'
         ];
         
         // Special handling for the root route - allow guest access
@@ -29,81 +29,42 @@ export class AuthGuard {
         }
         
         // Check if current URL is an account route
-        const isCurrentRouteAccountRoute = accountRoutes.some(route => state.url.includes(route));
+        const isCurrentRouteAccountRoute = accountRoutes.some(route => state.url === route);
 
-        // Check for account route flags in localStorage
-        const hasAccountRouteFlag = localStorage.getItem('isAccountRoute') === 'true';
-        const hasReloadFlag = localStorage.getItem('accountRouteReload') !== null;
-        const lastAccountRoute = localStorage.getItem('lastAccountRoute');
-        
-        console.log(`AuthGuard: Route: ${state.url}, isAccountRoute: ${isCurrentRouteAccountRoute}, hasFlag: ${hasAccountRouteFlag}`);
-        
-        // Allow access if the current route is an account route
+        // If on an account route, clear any stored account data
         if (isCurrentRouteAccountRoute) {
-            console.log('AuthGuard: Allowing direct access to account route:', state.url);
-            localStorage.setItem('isAccountRoute', 'true');
-            localStorage.setItem('lastAccountRoute', state.url);
+            localStorage.removeItem('currentUser');
             return true;
         }
-        
-        // Also allow access if account route flag is set (important for reloads)
-        if (hasAccountRouteFlag) {
-            console.log('AuthGuard: Found account route flag, allowing access');
-            
-            // If we have a saved account route and the current URL doesn't match,
-            // this might be a reload with a wrong URL - redirect to the last account route
-            if (lastAccountRoute && !state.url.includes(lastAccountRoute)) {
-                console.log('AuthGuard: URL mismatch during reload, redirecting to:', lastAccountRoute);
-                
-                // Get any saved query parameters
-                const queryParams = localStorage.getItem('accountRouteParams') || '';
-                
-                // Navigate to the correct route
-                this.router.navigateByUrl(lastAccountRoute + queryParams);
-                return false;
-            }
-            
-            return true;
-        }
-        
+
         // Standard flow for non-account routes
         const account = this.accountService.accountValue;
-        console.log('AuthGuard: Standard check for route:', state.url, 'Account:', account ? 'Authenticated' : 'Not authenticated');
         
         // If not logged in, redirect to login page
         if (!account) {
-            // Only auto-login with fake backend
-            if (environment.useFakeBackend) {
-                // If localStorage already has the token but account is not set in service
-                if (localStorage.getItem('currentUser')) {
-                    // Try to refresh the token first
-                    return this.accountService.refreshToken().pipe(
-                        map(() => {
-                            return this.checkRoleAccess(route, state);
-                        }),
-                        catchError(() => {
-                            // If refresh fails, try to log in again
-                            return this.autoLoginWithFakeBackend(route, state);
-                        })
-                    );
-                } else {
-                    // No token, just do a fresh login
-                    return this.autoLoginWithFakeBackend(route, state);
-                }
-            } else {
-                console.log('AuthGuard: Redirecting to login page, return URL:', state.url);
-                
-                // Set a flag indicating this is a redirect to login (not a direct login access)
-                localStorage.setItem('redirectToLogin', 'true');
-                localStorage.removeItem('isAccountRoute');
-                
-                this.router.navigate(['/account/login'], { queryParams: { returnUrl: state.url } });
-                return false;
-            }
+            // Store the attempted URL for redirecting after login
+            const returnUrl = state.url;
+            localStorage.setItem('returnUrl', returnUrl);
+            
+            // Clear any stored account data
+            localStorage.removeItem('currentUser');
+            
+            // Navigate to login with replaceUrl to prevent back navigation
+            this.router.navigate(['/account/login'], { 
+                replaceUrl: true,
+                queryParams: { returnUrl }
+            });
+            return false;
         }
         
-        // User is logged in, check role access
-        return this.checkRoleAccess(route, state);
+        // Check role access
+        if (route.data?.roles && !route.data.roles.includes(account.role)) {
+            // If user doesn't have required role, redirect to home
+            this.router.navigate(['/'], { replaceUrl: true });
+            return false;
+        }
+        
+        return true;
     }
 
     private checkRoleAccess(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {

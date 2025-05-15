@@ -27,11 +27,23 @@ export class RequestService {
     }
 
     create(request: any): Observable<any> {
-        return this.http.post<any>(this.apiUrl, request);
+        // Transform items to RequestItems format for Sequelize
+        const transformedRequest = {
+            ...request,
+            RequestItems: request.items || []
+        };
+        delete transformedRequest.items;
+        return this.http.post<any>(this.apiUrl, transformedRequest);
     }
 
     update(id: number, request: any): Observable<any> {
-        return this.http.put<any>(`${this.apiUrl}/${id}`, request);
+        // Transform items to RequestItems format for Sequelize
+        const transformedRequest = {
+            ...request,
+            RequestItems: request.items || []
+        };
+        delete transformedRequest.items;
+        return this.http.put<any>(`${this.apiUrl}/${id}`, transformedRequest);
     }
 
     delete(id: number): Observable<any> {

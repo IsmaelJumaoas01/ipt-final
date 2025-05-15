@@ -20,17 +20,40 @@ export class ListComponent implements OnInit {
 
   ngOnInit() {
     this.loading = true;
-    this.requestService.getAll().pipe(first()).subscribe({
-      next: data => {
-        this.requests = data;
-        console.log('Loaded requests:', this.requests);
+    if (this.account()?.role === 'Admin') {
+      // Admin sees all requests
+      this.requestService.getAll().pipe(first()).subscribe({
+        next: data => {
+          this.requests = data;
+          console.log('Loaded requests:', this.requests);
+          this.loading = false;
+        },
+        error: error => {
+          console.error('Error loading requests:', error);
+          this.loading = false;
+        }
+      });
+    } else {
+      // Regular users see only their requests
+      const employeeId = this.account()?.employeeId;
+      if (!employeeId) {
+        console.error('Employee ID not found for user');
         this.loading = false;
-      },
-      error: error => {
-        console.error('Error loading requests:', error);
-        this.loading = false;
+        return;
       }
-    });
+      
+      this.requestService.getByEmployeeId(employeeId).pipe(first()).subscribe({
+        next: data => {
+          this.requests = data;
+          console.log('Loaded user requests:', this.requests);
+          this.loading = false;
+        },
+        error: error => {
+          console.error('Error loading user requests:', error);
+          this.loading = false;
+        }
+      });
+    }
   }
 
   account() {
@@ -38,23 +61,29 @@ export class ListComponent implements OnInit {
   }
 
   edit(requestId: number) {
-    this.router.navigate(['/requests/edit', requestId]);
+    if (this.account()?.role === 'Admin') {
+      this.router.navigate(['/requests/edit', requestId]);
+    }
   }
 
   delete(requestId: number) {
-    if (confirm('Are you sure you want to delete this request?')) {
-      this.requestService.delete(requestId).subscribe({
-        next: () => {
-          this.requests = this.requests.filter(r => r.id !== requestId);
-        },
-        error: error => {
-          console.error('Error deleting request:', error);
-        }
-      });
+    if (this.account()?.role === 'Admin') {
+      if (confirm('Are you sure you want to delete this request?')) {
+        this.requestService.delete(requestId).subscribe({
+          next: () => {
+            this.requests = this.requests.filter(r => r.id !== requestId);
+          },
+          error: error => {
+            console.error('Error deleting request:', error);
+          }
+        });
+      }
     }
   }
 
   add() {
-    this.router.navigate(['/requests/add']);
+    if (this.account()?.role === 'Admin') {
+      this.router.navigate(['/requests/add']);
+    }
   }
 } 

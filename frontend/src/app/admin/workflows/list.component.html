@@ -20,8 +20,8 @@
         <thead>
           <tr>
             <th>Type</th>
-            <th>Details</th>
-            <th>Date</th>
+            <th *ngIf="!employeeId">Employee</th>
+            <th>Description</th>
             <th>Status</th>
             <th *ngIf="account()?.role === 'Admin'">Actions</th>
           </tr>
@@ -29,11 +29,20 @@
         <tbody>
           <tr *ngFor="let workflow of workflows">
             <td>{{workflow.type}}</td>
-            <td>
-              <div *ngIf="workflow.details?.task">{{workflow.details.task}}</div>
-              <div *ngIf="!workflow.details?.task">{{workflow.details | json}}</div>
+            <td *ngIf="!employeeId">
+              <span *ngIf="workflow.employee?.user">
+                {{workflow.employee.user.firstName}} {{workflow.employee.user.lastName}}
+              </span>
+              <span *ngIf="!workflow.employee?.user && workflow.employee">
+                {{workflow.employee.firstName}} {{workflow.employee.lastName}}
+              </span>
+              <span *ngIf="!workflow.employee">Employee #{{workflow.employeeId}}</span>
             </td>
-            <td>{{workflow.details?.date | date:'short'}}</td>
+            <td>
+              <div *ngIf="workflow.details?.description">{{workflow.details.description}}</div>
+              <div *ngIf="!workflow.details?.description && workflow.details?.task">{{workflow.details.task}}</div>
+              <div *ngIf="!workflow.details?.description && !workflow.details?.task">{{workflow.details | json}}</div>
+            </td>
             <td>
               <span class="badge" [ngClass]="{
                 'bg-warning': workflow.status === 'Pending',
@@ -51,7 +60,6 @@
                 <option value="Rejected">Rejected</option>
               </select>
               <a [routerLink]="['/workflows/edit', workflow.id]" class="btn btn-sm btn-primary me-1">Edit</a>
-              <button (click)="deleteWorkflow(workflow.id)" class="btn btn-sm btn-danger">Delete</button>
             </td>
           </tr>
         </tbody>

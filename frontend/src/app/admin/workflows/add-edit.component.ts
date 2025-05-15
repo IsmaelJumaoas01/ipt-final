@@ -11,7 +11,7 @@ export class AddEditComponent implements OnInit {
     id?: number;
     employeeId?: number;
     workflow: any = {
-        details: { task: '', date: new Date().toISOString().split('T')[0] },
+        details: { description: '' },
         status: 'Pending'
     };
     employees: any[] = [];
@@ -48,13 +48,14 @@ export class AddEditComponent implements OnInit {
                         this.workflow = x;
                         // Ensure details object exists
                         if (!this.workflow.details) {
-                            this.workflow.details = { task: '', date: new Date().toISOString().split('T')[0] };
+                            this.workflow.details = { description: '' };
                         }
-                        // Format date for input
-                        if (this.workflow.details.date) {
-                            const date = new Date(this.workflow.details.date);
-                            this.workflow.details.date = date.toISOString().split('T')[0];
+                        
+                        // Convert task to description if needed
+                        if (this.workflow.details.task && !this.workflow.details.description) {
+                            this.workflow.details.description = this.workflow.details.task;
                         }
+                        
                         this.loading = false;
                     },
                     error: error => {
@@ -87,7 +88,7 @@ export class AddEditComponent implements OnInit {
         
         // Validate required fields
         if (!this.workflow.type || (!this.employeeId && !this.workflow.employeeId) || 
-            !this.workflow.details?.task || !this.workflow.status) {
+            !this.workflow.details?.description || !this.workflow.status) {
             this.errorMessage = 'Please fill in all required fields';
             this.loading = false;
             return;

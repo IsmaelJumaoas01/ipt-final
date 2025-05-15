@@ -87,10 +87,17 @@ export class AddEditComponent implements OnInit {
                             this.request.status = this.capitalizeFirstLetter(this.request.status);
                         }
                         
-                        // Ensure items array exists
+                        // Ensure items array exists and handle different property names
                         if (!this.request.items) {
-                            // Convert requestItems to items format if they exist
-                            if (this.request.requestItems && this.request.requestItems.length > 0) {
+                            // Handle RequestItems from real backend
+                            if (this.request.RequestItems && this.request.RequestItems.length > 0) {
+                                this.request.items = this.request.RequestItems.map((item: any) => ({
+                                    name: item.name,
+                                    quantity: item.quantity
+                                }));
+                            }
+                            // Handle requestItems from fake backend
+                            else if (this.request.requestItems && this.request.requestItems.length > 0) {
                                 this.request.items = this.request.requestItems.map((item: any) => ({
                                     name: item.name,
                                     quantity: item.quantity

@@ -34,10 +34,22 @@
                 <span *ngIf="!request.employee">Employee ID: {{request.employeeId || 'Unknown'}}</span>
               </td>
               <td>
+                <!-- For real backend -->
                 <ul *ngIf="request.RequestItems && request.RequestItems.length > 0" class="mb-0 ps-3">
                   <li *ngFor="let item of request.RequestItems">{{item.name}} (x{{item.quantity}})</li>
                 </ul>
-                <span *ngIf="!request.RequestItems || request.RequestItems.length === 0" class="text-muted">No items</span>
+                <!-- For fake backend -->
+                <ul *ngIf="!request.RequestItems && request.requestItems && request.requestItems.length > 0" class="mb-0 ps-3">
+                  <li *ngFor="let item of request.requestItems">{{item.name}} (x{{item.quantity}})</li>
+                </ul>
+                <!-- For fake backend - alternative format -->
+                <ul *ngIf="!request.RequestItems && !request.requestItems && request.items && request.items.length > 0" class="mb-0 ps-3">
+                  <li *ngFor="let item of request.items">{{item.name}} (x{{item.quantity || 1}})</li>
+                </ul>
+                <!-- No items available -->
+                <span *ngIf="(!request.RequestItems || request.RequestItems.length === 0) && 
+                           (!request.requestItems || request.requestItems.length === 0) && 
+                           (!request.items || request.items.length === 0)" class="text-muted">No items</span>
               </td>
               <td>
                 <span class="badge" [ngClass]="{
@@ -48,7 +60,6 @@
               </td>
               <td>
                 <button *ngIf="account()?.role === 'Admin'" class="btn btn-sm btn-primary me-1" (click)="edit(request.id)">Edit</button>
-                <button *ngIf="account()?.role === 'Admin'" class="btn btn-sm btn-danger" (click)="delete(request.id)">Delete</button>
               </td>
             </tr>
             <tr *ngIf="!requests?.length">

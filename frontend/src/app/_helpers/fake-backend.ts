@@ -118,7 +118,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       id: 1, 
       employeeId: 1, 
       type: 'Onboarding', 
-      details: { task: 'Setup workstation', date: new Date().toISOString() }, 
+      details: { description: 'Setup workstation' }, 
       status: 'Pending',
       employee: { 
         id: 1, 
@@ -132,7 +132,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       id: 2, 
       employeeId: 1, 
       type: 'Training', 
-      details: { task: 'Complete security training', date: new Date().toISOString() }, 
+      details: { description: 'Complete security training' }, 
       status: 'Completed',
       employee: { 
         id: 1, 
@@ -146,7 +146,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       id: 3, 
       employeeId: 2, 
       type: 'Performance Review', 
-      details: { task: 'Quarterly performance review', date: new Date().toISOString() }, 
+      details: { description: 'Quarterly performance review' }, 
       status: 'Pending',
       employee: { 
         id: 2, 
@@ -160,7 +160,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       id: 4, 
       employeeId: 2, 
       type: 'Onboarding', 
-      details: { task: 'Complete HR paperwork', date: new Date().toISOString() }, 
+      details: { description: 'Complete HR paperwork' }, 
       status: 'Completed',
       employee: { 
         id: 2, 
@@ -649,12 +649,16 @@ export class FakeBackendInterceptor implements HttpInterceptor {
     // Request functions
     function getRequests() {
       if (!isAuthenticated()) return unauthorized();
-      return ok(self.requests.map(request => {
-        // Ensure each request has an employee reference
-        if (request.employeeId && !request.employee) {
-          const employee = self.employees.find(e => e.id === request.employeeId);
+      
+      const requestsWithItems = self.requests.map(request => {
+        // Create a new object to avoid modifying the original
+        const formattedRequest = { ...request } as any;
+        
+        // Ensure employee data is attached
+        if (formattedRequest.employeeId && !formattedRequest.employee) {
+          const employee = self.employees.find(e => e.id === formattedRequest.employeeId);
           if (employee) {
-            request.employee = {
+            formattedRequest.employee = {
               id: employee.id,
               employeeId: employee.employeeId,
               firstName: employee.firstName,
@@ -663,14 +667,19 @@ export class FakeBackendInterceptor implements HttpInterceptor {
             };
           }
         }
-        // Ensure requestItems exists
-        if (!request.requestItems) {
-          request.requestItems = [
-            { name: 'Default Item', quantity: 1 }
-          ];
-        }
-        return request;
-      }));
+        
+        // Ensure items exist in all expected formats
+        const defaultItems = [{ name: 'Default Item', quantity: 1 }];
+        
+        // Set items in all formats for maximum compatibility
+        formattedRequest.requestItems = formattedRequest.requestItems || formattedRequest.items || formattedRequest.RequestItems || defaultItems;
+        formattedRequest.items = formattedRequest.items || formattedRequest.requestItems || formattedRequest.RequestItems || defaultItems;
+        formattedRequest.RequestItems = formattedRequest.RequestItems || formattedRequest.requestItems || formattedRequest.items || defaultItems;
+        
+        return formattedRequest;
+      });
+      
+      return ok(requestsWithItems);
     }
 
     function getRequestById() {
@@ -778,7 +787,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
     }
 
     function updateRequest() {
-      if (!isAuthenticated() || !isAuthorized(Role.Admin)) return unauthorized();
+      if (!isAuthenticated()) return unauthorized();
       
       const requestId = idFromUrl();
       console.log(`Updating request with ID: ${requestId}`, body);
@@ -787,6 +796,32 @@ export class FakeBackendInterceptor implements HttpInterceptor {
       if (requestIndex === -1) {
         console.error(`Request not found with ID: ${requestId}`);
         return error('Request not found');
+      }
+
+      // Get the current user's account
+      const account = currentAccount();
+      const existingRequest = self.requests[requestIndex];
+
+      // Only allow admin users or the request's own employee to update it
+      const currentUserIsAdmin = isAuthorized(Role.Admin);
+      let userIsRequestOwner = false;
+      
+      // Check if current user is the owner of this request
+      if (account && !currentUserIsAdmin) {
+        // Find employee record for current user
+        const userEmployee = self.employees.find(e => e.user && e.user.id === account.id);
+        if (userEmployee && existingRequest.employeeId === userEmployee.id) {
+          userIsRequestOwner = true;
+          
+          // Non-admin users can only update items, not status
+          // Preserve the existing status
+          body.status = existingRequest.status;
+        }
+      }
+      
+      // Only proceed if user is admin or request owner
+      if (!currentUserIsAdmin && !userIsRequestOwner) {
+        return unauthorized();
       }
       
       // Process items - ensure they're valid and preserve casing
@@ -833,19 +868,62 @@ export class FakeBackendInterceptor implements HttpInterceptor {
     // Workflow functions
     function getWorkflows() {
       if (!isAuthenticated()) return unauthorized();
-      return ok(self.workflows);
+      // Add employee information to each workflow
+      const workflowsWithEmployeeInfo = self.workflows.map(workflow => {
+        const employee = self.employees.find(e => e.id === workflow.employeeId);
+        return {
+          ...workflow,
+          employee: employee || { 
+            id: workflow.employeeId,
+            employeeId: `EMP${workflow.employeeId}`,
+            firstName: 'Unknown',
+            lastName: 'Employee',
+            position: 'Unknown'
+          }
+        };
+      });
+      return ok(workflowsWithEmployeeInfo);
     }
 
     function getWorkflowsByEmployeeId() {
       if (!isAuthenticated()) return unauthorized();
       const employeeId = idFromUrl();
       const workflows = self.workflows.filter(w => w.employeeId === employeeId);
-      return ok(workflows);
+      
+      // Add employee information to each workflow
+      const workflowsWithEmployeeInfo = workflows.map(workflow => {
+        const employee = self.employees.find(e => e.id === workflow.employeeId);
+        return {
+          ...workflow,
+          employee: employee || { 
+            id: workflow.employeeId,
+            employeeId: `EMP${workflow.employeeId}`,
+            firstName: 'Unknown',
+            lastName: 'Employee',
+            position: 'Unknown'
+          }
+        };
+      });
+      
+      return ok(workflowsWithEmployeeInfo);
     }
 
     function getWorkflowById() {
       if (!isAuthenticated()) return unauthorized();
       const workflow = self.workflows.find(x => x.id === idFromUrl());
+      
+      // Add employee information
+      if (workflow) {
+        const employee = self.employees.find(e => e.id === workflow.employeeId);
+        workflow.employee = employee || { 
+          id: workflow.employeeId,
+          employeeId: `EMP${workflow.employeeId}`,
+          firstName: 'Unknown',
+          lastName: 'Employee',
+          position: 'Unknown'
+        };
+      }
+      
       return ok(workflow);
     }
 
@@ -939,8 +1017,7 @@ export class FakeBackendInterceptor implements HttpInterceptor {
         employeeId: employeeId,
         type: 'Transfer',
         details: { 
-          task: `Transferred from department ${oldDepartmentId} to department ${deptId}`,
-          date: new Date().toISOString()
+          description: `Transferred from department ${oldDepartmentId} to department ${deptId}`
         },
         status: 'Completed',
         employee: {
@@ -1169,7 +1246,7 @@ export class AltFakeBackendInterceptor implements HttpInterceptor {
         { id: 2, name: 'Marketing', description: 'Marketing team', employeeCount: 1 }
     ];
     private workflows = [
-        { id: 1, employeeId: 1, type: 'Onboarding', details: { task: 'Setup workstation', date: new Date().toISOString() }, status: 'Pending' }
+        { id: 1, employeeId: 1, type: 'Onboarding', details: { description: 'Setup workstation' }, status: 'Pending' }
     ];
     private requests = [
         { id: 1, employeeId: 2, type: 'Equipment', requestItems: [{ name: 'Laptop', quantity: 1 }], status: 'Pending' }

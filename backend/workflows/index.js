@@ -29,7 +29,8 @@ async function getAll(req, res, next) {
                     as: 'user',
                     attributes: ['firstName', 'lastName', 'email']
                 }]
-            }]
+            }],
+            order: [['id', 'DESC']]
         });
         console.log(`Found ${workflows.length} workflows`);
         res.json(workflows);
@@ -97,7 +98,8 @@ async function getByEmployeeId(req, res, next) {
                     as: 'user',
                     attributes: ['firstName', 'lastName', 'email']
                 }]
-            }]
+            }],
+            order: [['id', 'DESC']]
         });
         res.json(workflows);
     } catch (err) { next(err); }
@@ -117,7 +119,9 @@ async function onboarding(req, res, next) {
         const workflow = await db.Workflow.create({
             employeeId: req.body.employeeId,
             type: 'Onboarding',
-            details: req.body.details,
+            details: {
+                description: req.body.details?.description || 'New employee onboarding process'
+            },
             status: 'Pending'
         });
         res.status(201).json(workflow);

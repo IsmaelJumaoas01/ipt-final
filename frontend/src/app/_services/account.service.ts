@@ -62,10 +62,20 @@ export class AccountService {
   logout() {
     this.stopRefreshTokenTimer();
     
-    // If using fake backend, clear localStorage and return
+    // Clear all session data
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Clear any cookies
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    
+    // Clear the account subject
+    this.accountSubject.next(null);
+    
+    // If using fake backend, return immediately
     if (environment.useFakeBackend) {
-      localStorage.removeItem('currentUser');
-      this.accountSubject.next(null);
       return of(null);
     }
     
@@ -74,9 +84,11 @@ export class AccountService {
       .post<any>(`${baseUrl}/revoke-token`, {}, { withCredentials: true })
       .pipe(
         finalize(() => {
-          // Remove account from local storage and set current account to null regardless of API call result
-          localStorage.removeItem('currentUser');
-          this.accountSubject.next(null);
+          // Navigate to login page and replace history
+          this.router.navigate(['/account/login'], { 
+            replaceUrl: true,
+            queryParams: { returnUrl: window.location.pathname }
+          });
         })
       );
   }

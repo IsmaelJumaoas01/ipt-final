@@ -15,9 +15,16 @@
       <!-- Status field - always visible for admins, only visible for existing requests for users -->
       <div class="form-group mb-3" *ngIf="id && (isAdmin || request.status)">
         <label for="status">Status</label>
-        <select class="form-select" [(ngModel)]="request.status" name="status" id="status" autocomplete="off" [disabled]="!isAdmin">
-          <option *ngFor="let status of statusOptions" [value]="status.value">{{status.label}}</option>
-        </select>
+        <div class="d-flex align-items-center">
+          <select class="form-select" [(ngModel)]="request.status" name="status" id="status" autocomplete="off" [disabled]="!isAdmin">
+            <option *ngFor="let status of statusOptions" [value]="status.value">{{status.label}}</option>
+          </select>
+          <span *ngIf="isAdmin" class="ms-3 badge" [ngClass]="{
+            'bg-warning': request.status === 'Pending',
+            'bg-success': request.status === 'Approved',
+            'bg-danger': request.status === 'Rejected'
+          }">{{request.status}}</span>
+        </div>
         <small class="form-text text-muted" *ngIf="!isAdmin">Only administrators can change the status.</small>
       </div>
       

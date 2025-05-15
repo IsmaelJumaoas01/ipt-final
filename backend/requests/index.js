@@ -8,7 +8,7 @@ router.post('/', authorize(), create);
 router.get('/', authorize(Role.Admin), getAll);
 router.get('/:id', authorize(), getById);
 router.get('/employee/:employeeId', authorize(), getByEmployeeId);
-router.put('/:id', authorize(Role.Admin), update);
+router.put('/:id', authorize(), update);
 router.delete('/:id', authorize(Role.Admin), _delete);
 
 async function create(req, res, next) {
@@ -59,7 +59,23 @@ async function update(req, res, next) {
     try {
         const request = await db.Request.findByPk(req.params.id);
         if (!request) throw new Error('Request not found');
-        await request.update(req.body);
+        
+        // Allow users to update only their own requests
+        if (req.user.role !== Role.Admin && request.employeeId !== req.user.employeeId) {
+            throw new Error('Unauthorized - You can only update your own requests');
+        }
+        
+        // If not admin, only allow updating certain fields (like items), not status
+        if (req.user.role !== Role.Admin) {
+            // Keep the original status
+            const { status, ...updateFields } = req.body;
+            await request.update(updateFields);
+        } else {
+            // Admin can update all fields
+            await request.update(req.body);
+        }
+        
+        // Update request items if provided
         if (req.body.items) {
             await db.RequestItem.destroy({ where: { requestId: request.id } });
             await db.RequestItem.bulkCreate(req.body.items.map(item => ({
@@ -67,7 +83,13 @@ async function update(req, res, next) {
                 requestId: request.id
             })));
         }
-        res.json(request);
+        
+        // Return the updated request with items
+        const updatedRequest = await db.Request.findByPk(request.id, {
+            include: [{ model: db.RequestItem }, { model: db.Employee }]
+        });
+        
+        res.json(updatedRequest);
     } catch (err) { next(err); }
 }
 

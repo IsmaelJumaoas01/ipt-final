@@ -8,5 +8,6 @@ export interface Account {
   email: string;
   role: Role;
   status: string;
+  employeeId?: number;  // Optional employee ID for users
   jwtToken?: string;
 }

@@ -1,4 +1,5 @@
 export const environment = {
     production: true,
-    apiUrl: 'http://localhost:4000'
+    apiUrl: 'https://ipt-final-api.onrender.com', // Update this with your actual Render.com URL after deployment
+    useFakeBackend: false
 };

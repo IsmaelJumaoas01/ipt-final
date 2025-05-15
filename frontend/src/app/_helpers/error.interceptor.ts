@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
 import { catchError, switchMap, retry, delay } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 import { AccountService } from '../_services';
 import { environment } from '../../environments/environment';
@@ -12,7 +13,7 @@ export class ErrorInterceptor implements HttpInterceptor {
     private retryCount = 0;
     private maxRetries = 2; // Max number of retries for fake backend
 
-    constructor(private accountService: AccountService) { }
+    constructor(private accountService: AccountService, private router: Router) { }
 
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         return next.handle(request).pipe(
@@ -22,17 +23,34 @@ export class ErrorInterceptor implements HttpInterceptor {
                 delay: 500
             }) : retry(0),
             catchError(err => {
-                // Check if we're on an account route, if so, don't redirect
+                // Check if we're on an account route
                 const currentUrl = window.location.href;
                 const isAccountRoute = currentUrl.includes('/account/');
                 
                 if (isAccountRoute) {
-                    console.log('Error interceptor: On account route, not redirecting for auth errors:', currentUrl);
-                    return throwError(err.error?.message || err.statusText);
+                    return throwError(() => err.error?.message || err.statusText);
                 }
                 
-                // Only attempt refresh if this is a 401 error and not a login/refresh request
-                if (err.status === 401 && 
+                // Handle unauthorized (401) and forbidden (403) errors
+                if ([401, 403].includes(err.status)) {
+                    // Clear all session data
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    
+                    // Clear any cookies
+                    document.cookie.split(";").forEach(function(c) { 
+                        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                    });
+                    
+                    // Clear the account
+                    this.accountService.logout().subscribe();
+                    
+                    // Navigate to login with replaceUrl to prevent back navigation
+                    this.router.navigate(['/account/login'], { 
+                        replaceUrl: true,
+                        queryParams: { returnUrl: window.location.pathname }
+                    });
+                } else if (err.status === 401 && 
                     this.accountService.accountValue && 
                     !environment.useFakeBackend &&
                     !request.url.includes('/authenticate') && 
@@ -61,10 +79,6 @@ export class ErrorInterceptor implements HttpInterceptor {
                             return throwError(refreshErr);
                         })
                     );
-                } else if (err.status === 403 && this.accountService.accountValue && !environment.useFakeBackend) {
-                    // For 403 errors (forbidden), log out as the user doesn't have permission
-                    console.log('Error interceptor: Logging out user due to permission error (403)');
-                    this.accountService.logout();
                 } else if (environment.useFakeBackend && [401, 403].includes(err.status)) {
                     // If using fake backend and getting auth errors, try to auto-login
                     if (this.retryCount < this.maxRetries) {
@@ -92,7 +106,7 @@ export class ErrorInterceptor implements HttpInterceptor {
 
                 const error = (err && err.error && err.error.message) || err.statusText;
                 console.error('HTTP Error:', err);
-                return throwError(error);
+                return throwError(() => error);
             })
         );
     }

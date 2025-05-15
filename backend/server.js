@@ -44,7 +44,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Serve static files from the frontend build directory
-app.use(express.static(path.join(__dirname, 'frontend-dist')));
+// In production, the frontend files are in ../frontend/dist/frontend
+const frontendPath = process.env.NODE_ENV === 'production' 
+    ? path.join(__dirname, '../frontend/dist/frontend')
+    : path.join(__dirname, '../frontend/dist/frontend');
+
+console.log('Serving frontend from:', frontendPath);
+app.use(express.static(frontendPath));
 
 // api routes
 app.use('/api/accounts', require('./accounts/accounts.controller'));
@@ -61,9 +67,23 @@ app.use(errorHandler);
 
 // Handle frontend routes - must be after API routes
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend-dist/index.html'));
+    const indexPath = path.join(frontendPath, 'index.html');
+    console.log('Serving index.html from:', indexPath);
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error('Error serving index.html:', err);
+            console.error('Current directory:', __dirname);
+            console.error('Frontend path:', frontendPath);
+            console.error('Full index path:', indexPath);
+            res.status(500).send('Error loading frontend application');
+        }
+    });
 });
 
 // start server
 const port = process.env.NODE_ENV === 'production' ? (process.env.PORT || 80) : 4000;
-app.listen(port, () => console.log('Server listening on port ' + port));
+app.listen(port, () => {
+    console.log('Server listening on port ' + port);
+    console.log('Current directory:', __dirname);
+    console.log('Frontend path:', frontendPath);
+});

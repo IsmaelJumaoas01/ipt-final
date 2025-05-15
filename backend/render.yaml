@@ -32,11 +32,17 @@ services:
       
       # Clean and reinstall frontend dependencies
       echo "=== CLEANING AND REINSTALLING FRONTEND ==="
-      npm run reinstall
+      rm -rf node_modules package-lock.json .angular/cache dist
+      npm cache clean --force
+      npm install --legacy-peer-deps
+      
+      # Install Angular CLI and build tools
+      echo "=== INSTALLING ANGULAR CLI AND BUILD TOOLS ==="
+      npm install @angular/cli@16.2.12 @angular-devkit/build-angular@16.2.12 @angular/compiler-cli@16.2.12 --save-dev --legacy-peer-deps
       
       # Build with increased memory limit
       echo "=== RUNNING ANGULAR BUILD ==="
-      NODE_OPTIONS="--max_old_space_size=4096" ./node_modules/.bin/ng build --configuration production
+      NODE_OPTIONS="--max_old_space_size=4096" npm run build
       
       # Verify build output
       echo "=== VERIFYING BUILD ==="

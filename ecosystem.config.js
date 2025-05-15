@@ -10,8 +10,7 @@ module.exports = {
     },
     {
       name: 'frontend',
-      script: 'frontend/node_modules/.bin/serve',
-      args: '-s frontend/dist/frontend',
+      script: 'frontend/server.js',
       env: {
         NODE_ENV: 'production',
         PORT: 4200

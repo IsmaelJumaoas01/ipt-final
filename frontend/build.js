@@ -29,42 +29,71 @@ function runCommand(command) {
 // Main build process
 async function buildAngular() {
   try {
-    console.log('Attempting Angular build...');
-    
-    // Try to install Angular packages
+    // Install required packages first
     console.log('Installing Angular packages...');
-    const installSuccess = runCommand('npm install @angular/cli@16.2.12 @angular-devkit/build-angular@16.2.12 @angular/compiler-cli@16.2.12 --save-dev --legacy-peer-deps');
+    runCommand('npm install @angular/cli@16.2.12 @angular-devkit/build-angular@16.2.12 @angular/compiler-cli@16.2.12 --save-dev --legacy-peer-deps');
     
-    if (!installSuccess) {
-      console.log('Failed to install Angular packages, falling back to static site...');
-      return useFallbackBuild();
-    }
+    // Create a temporary build script
+    const buildCommand = `
+      const { execSync } = require('child_process');
+      
+      try {
+        // Run Angular build programmatically
+        require('@angular/cli/lib/init');
+        const { default: run } = require('@angular/cli/lib/cli');
+        
+        run({
+          cliArgs: ['build', '--configuration=production']
+        }).then(result => {
+          console.log('Build completed with result:', result);
+          process.exit(result ? 1 : 0);
+        }).catch(err => {
+          console.error('Build failed:', err);
+          process.exit(1);
+        });
+      } catch (error) {
+        console.error('Error running Angular CLI:', error);
+        
+        // Fallback to direct command execution if the programmatic approach fails
+        try {
+          execSync('npx --no-install @angular/cli@16.2.12 build --configuration=production', {
+            stdio: 'inherit',
+            env: { ...process.env, NODE_OPTIONS: '--max_old_space_size=4096' }
+          });
+        } catch (fallbackError) {
+          console.error('Fallback build also failed:', fallbackError);
+          process.exit(1);
+        }
+      }
+    `;
     
-    // Try direct npx approach
-    console.log('Trying direct npx approach...');
-    const npxSuccess = runCommand('npx @angular/cli@16.2.12 build --configuration=production');
+    fs.writeFileSync(path.join(frontendDir, 'angular-build.js'), buildCommand);
     
-    if (npxSuccess && fs.existsSync(path.join(frontendDir, 'dist', 'frontend'))) {
-      console.log('Build successful!');
+    // Execute the build script
+    console.log('Executing Angular build...');
+    runCommand('node angular-build.js');
+    
+    // Check if build was successful by verifying dist folder
+    if (fs.existsSync(path.join(frontendDir, 'dist', 'frontend'))) {
+      console.log('Build successful! Output directory exists.');
       return true;
+    } else {
+      console.error('Build may have failed. Output directory not found.');
+      
+      // Last resort: try npx
+      console.log('Trying one last approach...');
+      runCommand('npx --no-install @angular/cli@16.2.12 build --configuration=production');
+      
+      if (fs.existsSync(path.join(frontendDir, 'dist', 'frontend'))) {
+        console.log('Final build attempt successful!');
+        return true;
+      } else {
+        console.error('All build attempts failed.');
+        return false;
+      }
     }
-    
-    console.log('All Angular build attempts failed, using fallback static site...');
-    return useFallbackBuild();
   } catch (error) {
     console.error('Build process failed:', error);
-    return useFallbackBuild();
-  }
-}
-
-// Fallback build function
-function useFallbackBuild() {
-  console.log('Using fallback static site build...');
-  try {
-    // Run the fallback build script
-    return runCommand('node fallback-build.js');
-  } catch (error) {
-    console.error('Fallback build failed:', error);
     return false;
   }
 }

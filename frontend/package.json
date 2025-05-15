@@ -3,7 +3,8 @@
     "version": "0.0.0",
     "scripts": {
         "ng": "ng",
-        "start": "if [ \"$NODE_ENV\" = \"production\" ]; then npx serve -s dist/frontend; else ng serve; fi",
+        "start": "if [ \"$NODE_ENV\" = \"production\" ]; then node server.js; else ng serve; fi",
+        "start:server": "node server.js",
         "build": "node node_modules/@angular/cli/bin/ng build --configuration production",
         "build:prod": "npm install @angular/cli@16.2.12 @angular-devkit/build-angular@16.2.12 @angular/compiler-cli@16.2.12 --save-dev --legacy-peer-deps && node node_modules/@angular/cli/bin/ng build --configuration production",
         "watch": "ng build --watch --configuration development",
@@ -28,7 +29,8 @@
         "rxjs": "7.8.0",
         "tslib": "2.6.0",
         "zone.js": "0.13.0",
-        "serve": "14.2.1"
+        "serve": "14.2.1",
+        "express": "4.18.2"
     },
     "devDependencies": {
         "@angular-devkit/build-angular": "16.2.12",

@@ -25,34 +25,25 @@ services:
       npm cache clean --force
       npm install --legacy-peer-deps
       
-      # Build frontend
-      echo "=== BUILDING FRONTEND ==="
+      # Install frontend dependencies (just Express)
+      echo "=== INSTALLING FRONTEND EXPRESS SERVER ==="
       cd frontend
       echo "Frontend directory: $(pwd)"
+      npm install express --save
       
-      # Clean and reinstall frontend dependencies
-      echo "=== CLEANING AND REINSTALLING FRONTEND ==="
-      rm -rf node_modules package-lock.json .angular/cache dist
-      npm cache clean --force
+      # Create frontend directory structure
+      echo "=== SETTING UP FRONTEND STATIC FILES ==="
+      mkdir -p dist/frontend
+      
+      # Run backend installation
+      echo "=== INSTALLING BACKEND DEPENDENCIES ==="
+      cd ../backend
       npm install --legacy-peer-deps
-      
-      # Run our build script with fallback
-      echo "=== RUNNING BUILD SCRIPT WITH FALLBACK ==="
-      node build.js || node fallback-build.js
-      
-      # Verify build output
-      echo "=== VERIFYING BUILD ==="
-      if [ ! -d "dist/frontend" ]; then
-        echo "ERROR: Frontend build directory not found, creating a minimal static site"
-        mkdir -p dist/frontend
-        echo "<html><body><h1>API is running</h1><p>Frontend is under maintenance. Please use <a href='/api-docs'>API docs</a>.</p></body></html>" > dist/frontend/index.html
-      fi
       
       echo "=== BUILD COMPLETED ==="
     startCommand: |
-      cd backend
-      echo "=== STARTING SERVER ==="
-      NODE_ENV=production npm start
+      echo "=== STARTING SERVICES ==="
+      npm run start
     healthCheckPath: /api-docs
     autoDeploy: true
     buildFilter:

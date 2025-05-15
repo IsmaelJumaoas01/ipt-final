@@ -11,6 +11,35 @@ services:
       pwd
       ls -la
       
+      # Create root package.json if it doesn't exist
+      echo "=== CREATING ROOT PACKAGE.JSON ==="
+      if [ ! -f "package.json" ]; then
+        echo "Creating root package.json..."
+        cat > package.json << EOF
+{
+  "name": "ipt-final",
+  "version": "1.0.0",
+  "description": "IPT Final Project with Angular frontend and Node.js backend",
+  "scripts": {
+    "start": "node backend/server.js",
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm start",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "dependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
+EOF
+        echo "Root package.json created"
+      else
+        echo "Root package.json already exists"
+      fi
+      
+      # Install root dependencies including concurrently
+      echo "=== INSTALLING ROOT DEPENDENCIES ==="
+      npm install --verbose
+      
       # Install Angular CLI globally
       echo "=== INSTALLING ANGULAR CLI ==="
       npm install -g @angular/cli@16.2.0

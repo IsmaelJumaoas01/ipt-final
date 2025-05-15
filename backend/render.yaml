@@ -21,27 +21,35 @@ services:
         cat package.json
       fi
       
-      # Install all dependencies
-      echo "=== INSTALLING ALL DEPENDENCIES ==="
-      npm run install:all
+      # Install root dependencies
+      echo "=== INSTALLING ROOT DEPENDENCIES ==="
+      npm install --legacy-peer-deps
+      
+      # Install Angular CLI globally
+      echo "=== INSTALLING ANGULAR CLI ==="
+      npm run install:angular
+      
+      # Verify Angular CLI installation
+      echo "=== VERIFYING ANGULAR CLI ==="
+      ng version
       
       # Run the build script which will build both frontend and backend
       echo "=== RUNNING BUILD SCRIPT ==="
-      npm run build:all
+      npm run build
       
       # Verify the build
       echo "=== VERIFYING BUILD ==="
-      if [ ! -d "dist/frontend" ]; then
+      if [ ! -d "frontend/dist/frontend" ]; then
         echo "ERROR: Frontend build not found"
         echo "Directory contents:"
         ls -la
-        echo "Dist directory contents:"
-        ls -la dist
+        echo "Frontend directory contents:"
+        ls -la frontend
         exit 1
       fi
       
       echo "Frontend build found:"
-      ls -la dist/frontend
+      ls -la frontend/dist/frontend
       
       echo "=== BUILD COMPLETED SUCCESSFULLY ==="
     startCommand: |
@@ -53,17 +61,17 @@ services:
       
       # Verify frontend build exists
       echo "=== VERIFYING FRONTEND BUILD ==="
-      if [ ! -d "dist/frontend" ]; then
+      if [ ! -d "frontend/dist/frontend" ]; then
         echo "ERROR: Frontend build not found"
         echo "Current directory contents:"
         ls -la
-        echo "Dist directory contents:"
-        ls -la dist
+        echo "Frontend directory contents:"
+        ls -la frontend
         exit 1
       fi
       
       echo "Frontend build found:"
-      ls -la dist/frontend
+      ls -la frontend/dist/frontend
       
       # Start the server
       echo "=== STARTING APPLICATION ==="
@@ -76,9 +84,6 @@ services:
         include:
           - backend/**
           - frontend/**
-          - package.json
-          - angular.json
-          - tsconfig.json
         ignore:
           - **/node_modules/**
           - **/.git/**

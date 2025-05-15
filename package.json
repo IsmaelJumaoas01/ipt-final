@@ -10,8 +10,8 @@
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend && npm start",
     "clean:frontend": "cd frontend && npx rimraf node_modules package-lock.json .angular/cache dist",
-    "install:angular": "cd frontend && npm install @angular/cli@16.2.12 @angular-devkit/build-angular@16.2.12 @angular/compiler-cli@16.2.12 --save-dev --legacy-peer-deps && npm install --legacy-peer-deps",
-    "build:frontend": "npm run clean:frontend && cd frontend && npm cache clean --force && npm install --legacy-peer-deps && cd .. && npm run install:angular && cd frontend && NODE_OPTIONS='--max_old_space_size=4096' ng build --configuration production",
+    "install:angular": "cd frontend && npm install @angular/cli@16.2.12 @angular-devkit/build-angular@16.2.12 @angular/compiler-cli@16.2.12 --save-dev --legacy-peer-deps && npm install --legacy-peer-deps && cd .. && cd frontend && npx ng build --configuration production",
+    "build:frontend": "npm run clean:frontend && cd frontend && npm cache clean --force && npm install --legacy-peer-deps && cd .. && npm run install:angular",
     "build": "npm run install:all && npm run build:frontend",
     "start": "pm2 start ecosystem.config.js --env production"
   },

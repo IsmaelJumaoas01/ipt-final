@@ -101,7 +101,7 @@ app.get('*', (req, res) => {
 });
 
 // start server
-const port = process.env.NODE_ENV === 'production' ? (process.env.PORT || 80) : 4000;
+const port = process.env.PORT || (process.env.NODE_ENV === 'production' ? 80 : 4000);
 app.listen(port, () => {
     console.log('Server listening on port ' + port);
     console.log('Current directory:', __dirname);

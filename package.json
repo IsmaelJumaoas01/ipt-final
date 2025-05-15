@@ -5,14 +5,16 @@
   "scripts": {
     "install:all": "npm install concurrently --legacy-peer-deps && cd frontend && npm install --legacy-peer-deps && cd ../backend && npm install --legacy-peer-deps",
     "install:angular": "npm install -g @angular/cli@16.2.0 && cd frontend && npm install @angular-devkit/build-angular@16.2.0 --save-dev",
-    "build:frontend": "cd frontend && npm install --legacy-peer-deps && npm run build -- --configuration production",
+    "build:frontend": "cd frontend && npm install --legacy-peer-deps && npm run build",
     "build:backend": "cd backend && npm install --legacy-peer-deps",
     "build": "npm run build:frontend && npm run build:backend",
     "start:backend": "cd backend && npm start",
     "start:frontend": "cd frontend && npm start",
     "start": "cd backend && npm start",
     "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "postinstall": "npm run build"
+    "postinstall": "npm run build",
+    "render:build": "npm run install:all && npm run build",
+    "render:start": "cd backend && npm start"
   },
   "dependencies": {
     "concurrently": "^8.2.2"

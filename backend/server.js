@@ -44,7 +44,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Serve static files from the frontend build directory
-app.use(express.static(path.join(__dirname, '../frontend/dist/frontend')));
+app.use(express.static(path.join(__dirname, 'frontend-dist')));
 
 // api routes
 app.use('/api/accounts', require('./accounts/accounts.controller'));
@@ -61,7 +61,7 @@ app.use(errorHandler);
 
 // Handle frontend routes - must be after API routes
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist/frontend/index.html'));
+    res.sendFile(path.join(__dirname, 'frontend-dist/index.html'));
 });
 
 // start server

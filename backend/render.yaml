@@ -2,10 +2,15 @@ services:
   - type: web
     name: ipt-final-api
     env: node
-    rootDir: .  # Changed from backend to root to access both frontend and backend
+    rootDir: .
     buildCommand: |
-      cd frontend && npm install && npm run build
+      # Install dependencies for both frontend and backend
+      npm install -g @angular/cli
+      cd frontend && npm install && npm run build -- --configuration production
       cd ../backend && npm install
+      # Move frontend build to the correct location
+      mkdir -p backend/frontend-dist
+      cp -r frontend/dist/frontend/* backend/frontend-dist/
     startCommand: cd backend && npm start
     healthCheckPath: /api-docs
     autoDeploy: true
@@ -27,12 +32,12 @@ services:
       - key: DB_USER
         value: u875409848_jumaoas
       - key: DB_PASSWORD
-        sync: false  # This will be set manually in Render dashboard
+        sync: false
       - key: DB_NAME
         value: u875409848_jumaoas
       - key: JWT_SECRET
-        generateValue: true  # Render will generate a secure random value
+        generateValue: true
       - key: PORT
         value: 10000
       - key: PRODUCTION_FRONTEND_URL
-        value: https://ipt-final-jzfb.onrender.com  # Updated to match the actual Render.com URL 
+        value: https://ipt-final-jzfb.onrender.com 

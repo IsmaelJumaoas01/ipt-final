@@ -11,7 +11,8 @@
     "client": "ng serve --open",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "heroku-postbuild": "ng build --configuration production",
-    "render-build": "npm install && ng build --configuration production"
+    "render:build": "npm install && cd frontend && npm install --legacy-peer-deps && ng build --configuration production && cd ../backend && npm install --legacy-peer-deps",
+    "render:start": "cd backend && npm start"
   },
   "engines": {
     "node": "18.x",

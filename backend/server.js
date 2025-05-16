@@ -32,8 +32,13 @@ const corsOptions = {
         // Get allowed origins from config
         const allowedOrigins = [
             config.frontendUrls.development,
-            config.frontendUrls.production
+            config.frontendUrls.production,
+            'https://ipt-final-224d3.web.app',  // Explicitly add Firebase domain
+            'https://ipt-final-224d3.firebaseapp.com'  // Alternative Firebase domain
         ].filter(Boolean); // Remove any undefined values
+        
+        console.log('Request origin:', origin);
+        console.log('Allowed origins:', allowedOrigins);
         
         // In development or when using fake backend, allow all origins
         if (process.env.NODE_ENV !== 'production' || process.env.USE_FAKE_BACKEND === 'true') {
@@ -116,7 +121,7 @@ let port;
 if (process.env.PORT) {
     port = parseInt(process.env.PORT, 10);
 } else {
-    port = process.env.NODE_ENV === 'production' ? 80 : 4000;
+    port = process.env.NODE_ENV === 'production' ? 80 : 10000;
 }
 
 app.listen(port, () => {

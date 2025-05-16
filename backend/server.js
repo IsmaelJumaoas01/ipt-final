@@ -21,7 +21,7 @@ console.log('Environment variables:', {
 
 // CORS configuration with specific allowed origin
 app.use(cors({
-    origin: 'https://ipt-final-224d3.web.app',
+    origin: ['https://ipt-final-224d3.web.app', 'https://ipt-fin.web.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true

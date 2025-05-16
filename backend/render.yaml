@@ -3,9 +3,9 @@ services:
   - type: web
     name: ipt-final-api
     env: node
-    # Build command for backend only (since frontend is on Firebase)
-    buildCommand: cd backend && npm install --legacy-peer-deps
-    startCommand: cd backend && npm start
+    # Use the root package.json scripts which will handle backend installation properly
+    buildCommand: npm run render:build
+    startCommand: npm run render:start
     healthCheckPath: /api-docs
     autoDeploy: true
     envVars:

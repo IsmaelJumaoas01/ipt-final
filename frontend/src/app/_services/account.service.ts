@@ -62,6 +62,59 @@ export class AccountService {
   logout() {
     this.stopRefreshTokenTimer();
     
+    // Revoke server-side token before clearing local storage
+    // Get current account value before clearing
+    const account = this.accountValue;
+    
+    // If using fake backend, return immediately
+    if (environment.useFakeBackend) {
+      // Clear all session data
+      this.clearStorageAndSession();
+      this.accountSubject.next(null);
+      return of(null);
+    }
+    
+    // If we have no account, just clear and return
+    if (!account) {
+      this.clearStorageAndSession();
+      this.accountSubject.next(null);
+      
+      // Navigate to login page and replace history
+      this.router.navigate(['/account/login'], { 
+        replaceUrl: true,
+        queryParams: { returnUrl: '/' }
+      });
+      
+      return of(null);
+    }
+    
+    // Revoke server-side token - must be done before clearing storage
+    return this.http
+      .post<any>(`${baseUrl}/revoke-token`, {}, { 
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${account.jwtToken}`
+        }
+      })
+      .pipe(
+        finalize(() => {
+          // Clear storage regardless of whether token revocation succeeded
+          this.clearStorageAndSession();
+          this.accountSubject.next(null);
+          
+          // Navigate to login page and replace history
+          this.router.navigate(['/account/login'], { 
+            replaceUrl: true,
+            queryParams: { returnUrl: '/' }
+          });
+        })
+      );
+  }
+  
+  /**
+   * Helper method to clear storage and cookies
+   */
+  private clearStorageAndSession() {
     // Clear all session data
     localStorage.clear();
     sessionStorage.clear();
@@ -70,27 +123,6 @@ export class AccountService {
     document.cookie.split(";").forEach(function(c) { 
       document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
     });
-    
-    // Clear the account subject
-    this.accountSubject.next(null);
-    
-    // If using fake backend, return immediately
-    if (environment.useFakeBackend) {
-      return of(null);
-    }
-    
-    // Revoke server-side token
-    return this.http
-      .post<any>(`${baseUrl}/revoke-token`, {}, { withCredentials: true })
-      .pipe(
-        finalize(() => {
-          // Navigate to login page and replace history
-          this.router.navigate(['/account/login'], { 
-            replaceUrl: true,
-            queryParams: { returnUrl: window.location.pathname }
-          });
-        })
-      );
   }
 
   /**

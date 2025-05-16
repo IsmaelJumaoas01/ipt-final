@@ -19,11 +19,12 @@ console.log('Environment variables:', {
     hasDBPassword: !!process.env.DB_PASSWORD
 });
 
-// Enable CORS for all requests - simpler approach
+// CORS configuration with specific allowed origin
 app.use(cors({
-    origin: '*',
+    origin: 'https://ipt-final-224d3.web.app',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
 }));
 
 app.use(bodyParser.urlencoded({ extended: false }));

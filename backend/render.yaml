@@ -30,6 +30,6 @@ services:
       - key: JWT_EXPIRES_IN
         value: "24h"
       - key: FRONTEND_URL
-        value: https://ipt-final-224d3.web.app
+        value: https://iptfinal-1329c.web.app
       - key: BACKEND_URL
         value: https://ipt-final-c99n.onrender.com

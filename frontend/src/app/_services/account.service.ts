@@ -88,14 +88,42 @@ export class AccountService {
       return of(null);
     }
     
+    // Get the refresh token from cookies
+    let refreshToken: string | null = null;
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.startsWith('refreshToken=')) {
+        refreshToken = cookie.substring('refreshToken='.length, cookie.length);
+        break;
+      }
+    }
+    
+    // Check if refresh token was found
+    if (!refreshToken) {
+      console.warn('No refresh token found in cookies during logout');
+      // If no token found, just clear and redirect
+      this.clearStorageAndSession();
+      this.accountSubject.next(null);
+      this.router.navigate(['/account/login'], { 
+        replaceUrl: true,
+        queryParams: { returnUrl: '/' }
+      });
+      return of(null);
+    }
+    
     // Revoke server-side token - must be done before clearing storage
     return this.http
-      .post<any>(`${baseUrl}/revoke-token`, {}, { 
-        withCredentials: true,
-        headers: {
-          Authorization: `Bearer ${account.jwtToken}`
+      .post<any>(
+        `${baseUrl}/revoke-token`, 
+        { token: refreshToken }, // Send the token in the body
+        { 
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${account.jwtToken}`
+          }
         }
-      })
+      )
       .pipe(
         finalize(() => {
           // Clear storage regardless of whether token revocation succeeded

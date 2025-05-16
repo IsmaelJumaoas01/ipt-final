@@ -1,5 +1,5 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://ipt-final-jzfb.onrender.com/api',
+    apiUrl: 'https://us-central1-ipt-final-224d3.cloudfunctions.net/api',
     useFakeBackend: false
 };

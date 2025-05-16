@@ -125,3 +125,6 @@ app.listen(port, () => {
     console.log('Root directory:', rootDir);
     console.log('Frontend path:', frontendPath);
 });
+
+// Export the app for Firebase Functions
+module.exports = app;

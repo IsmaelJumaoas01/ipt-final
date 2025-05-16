@@ -3,11 +3,12 @@ services:
   - type: web
     name: ipt-final-api
     env: node
-    # Use the root package.json scripts which will handle backend installation properly
-    buildCommand: npm run render:build
-    startCommand: npm run render:start
+    # Build command that properly handles frontend and backend
+    buildCommand: cd ../frontend && npm install --legacy-peer-deps && npm run build && cd ../backend && npm install --legacy-peer-deps
+    startCommand: npm start
     healthCheckPath: /api-docs
     autoDeploy: true
+    # Note: Frontend is built as part of the backend service
     envVars:
       - key: NODE_ENV
         value: production
@@ -30,6 +31,6 @@ services:
       - key: JWT_EXPIRES_IN
         value: "24h"
       - key: FRONTEND_URL
-        value: https://ipt-final-224d3.web.app
+        value: https://ipt-final.onrender.com
       - key: BACKEND_URL
         value: https://ipt-final-api.onrender.com 

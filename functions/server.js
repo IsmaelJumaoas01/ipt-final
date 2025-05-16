@@ -19,17 +19,40 @@ console.log('Environment variables:', {
     hasDBPassword: !!process.env.DB_PASSWORD
 });
 
-// CORS configuration with specific allowed origin
-app.use(cors({
-    origin: 'https://ipt-final-224d3.web.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
-
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+
+// CORS configuration
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, curl, postman)
+        if (!origin) return callback(null, true);
+        
+        // Get allowed origins from config
+        const allowedOrigins = [
+            config.frontendUrls.development,
+            config.frontendUrls.production
+        ].filter(Boolean); // Remove any undefined values
+        
+        // In development or when using fake backend, allow all origins
+        if (process.env.NODE_ENV !== 'production' || process.env.USE_FAKE_BACKEND === 'true') {
+            return callback(null, true);
+        }
+        
+        // Check if origin is allowed
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 // Get the root directory (where both frontend and backend folders are)
 const rootDir = path.join(__dirname, '..');
@@ -93,7 +116,7 @@ let port;
 if (process.env.PORT) {
     port = parseInt(process.env.PORT, 10);
 } else {
-    port = process.env.NODE_ENV === 'production' ? 80 : 10000;
+    port = process.env.NODE_ENV === 'production' ? 80 : 4000;
 }
 
 app.listen(port, () => {

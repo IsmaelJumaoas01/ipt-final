@@ -91,13 +91,12 @@ export class HomeComponent implements OnInit {
                     }
                 });
                 
-                // Get user's requests
-                this.requestService.getAll().pipe(
+                // Get user's requests - use getByEmployeeId instead of getAll
+                this.requestService.getByEmployeeId(userEmployee.id).pipe(
                     catchError(() => of([]))
-                ).subscribe(allRequests => {
-                    // Filter requests for this employee
-                    this.requests = allRequests
-                        .filter(r => r.employeeId === userEmployee.id)
+                ).subscribe(requests => {
+                    // Sort requests by date
+                    this.requests = requests
                         .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
                         .slice(0, 5); // Show only the 5 most recent requests
                     

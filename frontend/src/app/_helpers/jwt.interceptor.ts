@@ -26,42 +26,54 @@ export class JwtInterceptor implements HttpInterceptor {
     console.log(`JWT Interceptor: Request to ${request.method} ${request.url}`);
     console.log(`JWT Interceptor: Is logged in: ${isLoggedIn}, Is API URL: ${isApiUrl}, Is Auth Endpoint: ${isAuthEndpoint}`);
     
-    if (isLoggedIn && isApiUrl && !isAuthEndpoint) {
-      // Clone the request with the auth header
-      const token = account.jwtToken;
+    // For API URLs, always include credentials
+    if (isApiUrl) {
+      // Start with including credentials for all API requests
+      const requestOptions: { 
+        withCredentials: boolean; 
+        setHeaders?: { [name: string]: string } 
+      } = {
+        withCredentials: true
+      };
       
-      // Verify token exists and is not undefined
-      if (!token || token === 'undefined') {
-        console.error('JWT Interceptor: Invalid token. Forcing logout and re-login');
-        this.accountService.logout();
-        return next.handle(request);
-      }
-      
-      // Log auth token being added for troubleshooting
-      console.log(`JWT Interceptor: Adding auth token to request: ${request.url}`);
-      
-      try {
-        // Parse the JWT token to check expiration
-        const jwtToken = JSON.parse(atob(token.split(".")[1]));
-        const expires = new Date(jwtToken.exp * 1000);
-        const now = new Date();
+      // If logged in and not an auth endpoint, also add the Authorization header
+      if (isLoggedIn && !isAuthEndpoint) {
+        const token = account.jwtToken;
         
-        // Check if token is expired
-        if (expires < now) {
-          console.error(`JWT Interceptor: Token expired at ${expires.toLocaleString()}, current time is ${now.toLocaleString()}`);
-        } else {
-          console.log(`JWT Interceptor: Token valid until ${expires.toLocaleString()}`);
+        // Verify token exists and is not undefined
+        if (!token || token === 'undefined') {
+          console.error('JWT Interceptor: Invalid token. Forcing logout and re-login');
+          this.accountService.logout();
+          return next.handle(request);
         }
-      } catch (e) {
-        console.error('JWT Interceptor: Error parsing JWT token:', e);
+        
+        // Log auth token being added for troubleshooting
+        console.log(`JWT Interceptor: Adding auth token to request: ${request.url}`);
+        
+        try {
+          // Parse the JWT token to check expiration
+          const jwtToken = JSON.parse(atob(token.split(".")[1]));
+          const expires = new Date(jwtToken.exp * 1000);
+          const now = new Date();
+          
+          // Check if token is expired
+          if (expires < now) {
+            console.error(`JWT Interceptor: Token expired at ${expires.toLocaleString()}, current time is ${now.toLocaleString()}`);
+          } else {
+            console.log(`JWT Interceptor: Token valid until ${expires.toLocaleString()}`);
+          }
+        } catch (e) {
+          console.error('JWT Interceptor: Error parsing JWT token:', e);
+        }
+        
+        // Add Authorization header
+        requestOptions.setHeaders = { 
+          Authorization: `Bearer ${token}` 
+        };
       }
       
-      // Clone the request with the auth header
-      request = request.clone({
-        setHeaders: { 
-          Authorization: `Bearer ${token}` 
-        }
-      });
+      // Clone the request with the appropriate options
+      request = request.clone(requestOptions);
     }
 
     // Log response for API calls

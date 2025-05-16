@@ -4,7 +4,7 @@ export const environment = {
     // apiUrl: 'http://localhost:10000/api',
     
     // Option 2: Remote backend on Render
-    apiUrl: 'https://ipt-final-jzfb.onrender.com/api',
+    apiUrl: 'https://ipt-final-c99n.onrender.com/api',
     
     useFakeBackend: false
 };

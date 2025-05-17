@@ -113,8 +113,54 @@ async function initialize() {
                     logging: console.log
                 });
                 console.log('Database sync completed');
-                
-                // Break out of retry loop on success
+
+                // Create a lock table to prevent multiple seeding
+                const Lock = sequelize.define('Lock', {
+                    id: {
+                        type: Sequelize.INTEGER,
+                        primaryKey: true,
+                        autoIncrement: true
+                    },
+                    locked: {
+                        type: Sequelize.BOOLEAN,
+                        defaultValue: false
+                    }
+                }, {
+                    timestamps: true
+                });
+
+                await Lock.sync();
+
+                // Try to acquire lock
+                const [lock, created] = await Lock.findOrCreate({
+                    where: { id: 1 },
+                    defaults: { locked: true }
+                });
+
+                if (created || !lock.locked) {
+                    try {
+                        if (!created) {
+                            await lock.update({ locked: true });
+                        }
+                        
+                        // Seed data if needed
+                        console.log('Acquired lock, proceeding with database seeding...');
+                        const seedData = require('./seed-data');
+                        await seedData.seedDatabase();
+                        console.log('Database seeding completed');
+                        
+                        // Release lock
+                        await lock.update({ locked: false });
+                    } catch (error) {
+                        // Release lock in case of error
+                        await lock.update({ locked: false });
+                        throw error;
+                    }
+                } else {
+                    console.log('Another process is seeding the database, skipping...');
+                }
+
+                console.log('Database initialization completed successfully');
                 break;
             } catch (error) {
                 retries--;
@@ -124,14 +170,6 @@ async function initialize() {
                 await new Promise(resolve => setTimeout(resolve, 5000));
             }
         }
-        
-        // Seed data if needed
-        console.log('Seeding database...');
-        const seedData = require('./seed-data');
-        await seedData.seedDatabase();
-        console.log('Database seeding completed');
-        
-        console.log('Database initialization completed successfully');
     } catch (error) {
         console.error('Database initialization error:', error);
         console.error('Error details:', {

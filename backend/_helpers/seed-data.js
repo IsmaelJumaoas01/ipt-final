@@ -11,16 +11,31 @@ async function seedDatabase() {
         console.log('Checking if database needs seeding...');
         
         // Check if we need to seed the database
-        const adminCount = await db.Account.count({ where: { role: Role.Admin } });
-        const accountCount = await db.Account.count();
-        const departmentCount = await db.Department.count();
-        const employeeCount = await db.Employee.count();
-        const requestCount = await db.Request.count();
-        const workflowCount = await db.Workflow.count();
+        const counts = await Promise.all([
+            db.Account.count(),
+            db.Department.count(),
+            db.Employee.count(),
+            db.Request.count(),
+            db.Workflow.count(),
+            db.RequestItem.count()
+        ]);
         
-        // If there's already data in the database, don't seed
-        if (adminCount > 0 || accountCount > 0) {
-            console.log('Database already has accounts, skipping seed process');
+        const [accountCount, departmentCount, employeeCount, requestCount, workflowCount, requestItemCount] = counts;
+        
+        // Log current table counts
+        console.log('Current table counts:', {
+            accounts: accountCount,
+            departments: departmentCount,
+            employees: employeeCount,
+            requests: requestCount,
+            workflows: workflowCount,
+            requestItems: requestItemCount
+        });
+
+        // If there's already data in ANY table, don't seed
+        if (accountCount > 0 || departmentCount > 0 || employeeCount > 0 || 
+            requestCount > 0 || workflowCount > 0 || requestItemCount > 0) {
+            console.log('Database already has data, skipping seed process');
             return;
         }
         

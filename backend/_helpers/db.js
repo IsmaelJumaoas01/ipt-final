@@ -54,6 +54,18 @@ async function initialize() {
                 ssl: {
                     rejectUnauthorized: false
                 }
+            },
+            // Add connection pool configuration
+            pool: {
+                max: 5,
+                min: 0,
+                acquire: 30000,
+                idle: 10000
+            },
+            // Disable automatic pluralization
+            define: {
+                freezeTableName: true,
+                timestamps: false
             }
         });
         
@@ -61,36 +73,57 @@ async function initialize() {
         await sequelize.authenticate();
         console.log('Sequelize connection established successfully');
         
-        // Initialize models
-        console.log('Initializing models...');
-        db.Account = require('../accounts/account.model')(sequelize);
-        db.RefreshToken = require('../accounts/refresh-token.model')(sequelize);
-        db.Employee = require('../employees/employee.model')(sequelize);
-        db.Department = require('../departments/department.model')(sequelize);
-        db.Request = require('../requests/request.model')(sequelize);
-        db.RequestItem = require('../requests/request-item.model')(sequelize);
-        db.Workflow = require('../workflows/workflow.model')(sequelize);
-        
-        // Set up associations
-        console.log('Setting up model associations...');
-        db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
-        db.RefreshToken.belongsTo(db.Account);
+        // Initialize models with retry mechanism
+        let retries = 5;
+        while (retries > 0) {
+            try {
+                console.log('Initializing models...');
+                // Initialize your models
+                db.Account = require('../accounts/account.model')(sequelize);
+                db.RefreshToken = require('../accounts/refresh-token.model')(sequelize);
+                db.Employee = require('../employees/employee.model')(sequelize);
+                db.Department = require('../departments/department.model')(sequelize);
+                db.Request = require('../requests/request.model')(sequelize);
+                db.RequestItem = require('../requests/request-item.model')(sequelize);
+                db.Workflow = require('../workflows/workflow.model')(sequelize);
+                
+                // Set up associations
+                console.log('Setting up model associations...');
+                db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
+                db.RefreshToken.belongsTo(db.Account);
 
-        db.Employee.belongsTo(db.Account, { foreignKey: 'userId', as: 'user' });
-        db.Employee.belongsTo(db.Department, { foreignKey: 'departmentId' });
-        db.Department.hasMany(db.Employee, { foreignKey: 'departmentId' });
+                db.Employee.belongsTo(db.Account, { foreignKey: 'userId', as: 'user' });
+                db.Employee.belongsTo(db.Department, { foreignKey: 'departmentId' });
+                db.Department.hasMany(db.Employee, { foreignKey: 'departmentId' });
 
-        db.Request.belongsTo(db.Employee, { foreignKey: 'employeeId' });
-        db.Request.hasMany(db.RequestItem, { foreignKey: 'requestId' });
-        db.RequestItem.belongsTo(db.Request, { foreignKey: 'requestId' });
+                db.Request.belongsTo(db.Employee, { foreignKey: 'employeeId' });
+                db.Request.hasMany(db.RequestItem, { foreignKey: 'requestId' });
+                db.RequestItem.belongsTo(db.Request, { foreignKey: 'requestId' });
 
-        db.Workflow.belongsTo(db.Employee, { foreignKey: 'employeeId', as: 'employee' });
-        db.Employee.hasMany(db.Workflow, { foreignKey: 'employeeId', as: 'workflows' });
+                db.Workflow.belongsTo(db.Employee, { foreignKey: 'employeeId', as: 'employee' });
+                db.Employee.hasMany(db.Workflow, { foreignKey: 'employeeId', as: 'workflows' });
 
-        // Sync database
-        console.log('Syncing database...');
-        await sequelize.sync({ force: false });
-        console.log('Database sync completed');
+                // Sync database with safe options
+                console.log('Syncing database...');
+                await sequelize.sync({ 
+                    force: false,
+                    alter: false,
+                    // Disable foreign key checks during sync
+                    hooks: false,
+                    logging: console.log
+                });
+                console.log('Database sync completed');
+                
+                // Break out of retry loop on success
+                break;
+            } catch (error) {
+                retries--;
+                if (retries === 0) throw error;
+                console.log(`Database initialization failed, ${retries} retries left:`, error);
+                // Wait 5 seconds before retrying
+                await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+        }
         
         // Seed data if needed
         console.log('Seeding database...');

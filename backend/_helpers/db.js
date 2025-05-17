@@ -89,7 +89,7 @@ async function initialize() {
 
         // Sync database
         console.log('Syncing database...');
-        await sequelize.sync({ alter: true });
+        await sequelize.sync({ force: false });
         console.log('Database sync completed');
         
         // Seed data if needed

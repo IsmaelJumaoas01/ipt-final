@@ -11,7 +11,8 @@ export class AddEditComponent implements OnInit {
     id?: number;
     request: any = { 
         items: [{ name: '', quantity: 1 }],
-        type: 'Equipment' // Set default type with proper casing
+        type: 'Equipment',
+        status: 'Pending'
     };
     employees: any[] = [];
     workflows: any[] = [];
@@ -70,53 +71,27 @@ export class AddEditComponent implements OnInit {
         });
 
         if (this.id) {
+            this.loading = true;
             this.requestService.getById(this.id)
                 .pipe(first())
                 .subscribe({
                     next: (request) => {
-                        console.log('Loaded request:', request);
-                        this.request = request;
-                        
-                        // Ensure type has proper casing
-                        if (this.request.type) {
-                            this.request.type = this.capitalizeFirstLetter(this.request.type);
-                        }
-                        
-                        // Ensure status has proper casing
-                        if (this.request.status) {
-                            this.request.status = this.capitalizeFirstLetter(this.request.status);
-                        }
-                        
-                        // Ensure items array exists and handle different property names
-                        if (!this.request.items) {
-                            // Handle RequestItems from real backend
-                            if (this.request.RequestItems && this.request.RequestItems.length > 0) {
-                                this.request.items = this.request.RequestItems.map((item: any) => ({
-                                    name: item.name,
-                                    quantity: item.quantity
-                                }));
-                            }
-                            // Handle requestItems from fake backend
-                            else if (this.request.requestItems && this.request.requestItems.length > 0) {
-                                this.request.items = this.request.requestItems.map((item: any) => ({
-                                    name: item.name,
-                                    quantity: item.quantity
-                                }));
-                            } else {
-                                this.request.items = [{ name: '', quantity: 1 }];
-                            }
-                        }
+                        this.request = {
+                            type: request.type || 'Equipment',
+                            status: request.status || 'Pending',
+                            items: request.items?.map((item: any) => ({
+                                name: item.name || '',
+                                quantity: parseInt(item.quantity) || 1
+                            })) || [{ name: '', quantity: 1 }]
+                        };
+                        this.loading = false;
                     },
                     error: (error) => {
                         console.error('Error loading request:', error);
                         this.alertService.error('Failed to load request details');
+                        this.loading = false;
                     }
                 });
-        }
-
-        // Ensure items array is always initialized
-        if (!this.request.items || this.request.items.length === 0) {
-            this.request.items = [{ name: '', quantity: 1 }];
         }
     }
     
@@ -128,41 +103,26 @@ export class AddEditComponent implements OnInit {
 
     onSubmit() {
         this.submitted = true;
-        this.loading = true;
         
-        // Validate items - ensure no empty names
-        const validItems = this.request.items.filter((item: any) => item.name && item.name.trim() !== '');
-        if (validItems.length === 0) {
-            this.errorMessage = 'At least one item with a name is required';
-            this.alertService.error(this.errorMessage);
-            this.loading = false;
+        // Basic validation
+        if (!this.request.type) {
+            this.alertService.error('Please select a request type');
             return;
         }
-        
-        // Only use valid items
-        this.request.items = validItems;
 
-        // Always set status to 'Pending' (with capital P) when creating a new request
-        if (!this.id) {
-            this.request.status = 'Pending';
-            delete this.request.workflowId;
-            delete this.request.description;
-            
-            // Ensure employeeId is a number
-            if (this.request.employeeId && typeof this.request.employeeId === 'string') {
-                this.request.employeeId = parseInt(this.request.employeeId, 10);
-            }
+        // Validate items
+        const validItems = this.request.items.filter((item: any) => 
+            item.name && item.name.trim() !== '' && 
+            item.quantity && parseInt(item.quantity) > 0
+        );
+
+        if (validItems.length === 0) {
+            this.alertService.error('At least one valid item is required');
+            return;
         }
-        
-        // Ensure type has proper casing
-        if (this.request.type) {
-            this.request.type = this.capitalizeFirstLetter(this.request.type);
-        }
-        
-        // Ensure status has proper casing
-        if (this.request.status) {
-            this.request.status = this.capitalizeFirstLetter(this.request.status);
-        }
+
+        this.request.items = validItems;
+        this.loading = true;
 
         if (this.id) {
             this.updateRequest();
@@ -172,18 +132,16 @@ export class AddEditComponent implements OnInit {
     }
 
     private createRequest() {
-        console.log('Creating request with data:', this.request);
-        
         this.requestService.create(this.request)
             .pipe(first())
             .subscribe({
                 next: () => {
-                    this.alertService.success('Request created successfully', { keepAfterRouteChange: true });
+                    this.alertService.success('Request created successfully');
                     this.router.navigate(['../'], { relativeTo: this.route });
                 },
                 error: error => {
-                    this.errorMessage = error.error?.message || 'An error occurred while creating the request';
-                    this.alertService.error(this.errorMessage);
+                    console.error('Error creating request:', error);
+                    this.alertService.error(error.error?.message || 'Failed to create request');
                     this.loading = false;
                 }
             });
@@ -194,27 +152,24 @@ export class AddEditComponent implements OnInit {
             .pipe(first())
             .subscribe({
                 next: () => {
-                    this.alertService.success('Update successful', { keepAfterRouteChange: true });
+                    this.alertService.success('Request updated successfully');
                     this.router.navigate(['../'], { relativeTo: this.route });
                 },
                 error: error => {
-                    this.errorMessage = error.error?.message || 'An error occurred while updating the request';
-                    this.alertService.error(this.errorMessage);
+                    console.error('Error updating request:', error);
+                    this.alertService.error(error.error?.message || 'Failed to update request');
                     this.loading = false;
                 }
             });
     }
 
     addItem() {
-        if (!this.request.items) this.request.items = [];
         this.request.items.push({ name: '', quantity: 1 });
     }
 
     removeItem(index: number) {
-        this.request.items.splice(index, 1);
-        // Ensure there's always at least one item
-        if (this.request.items.length === 0) {
-            this.request.items.push({ name: '', quantity: 1 });
+        if (this.request.items.length > 1) {
+            this.request.items.splice(index, 1);
         }
     }
 } 

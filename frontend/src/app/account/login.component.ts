@@ -180,12 +180,12 @@ export class LoginComponent implements OnInit {
                 localStorage.removeItem('isAccountRoute');
                 localStorage.removeItem('accountRouteReload');
                 localStorage.removeItem('lastAccountRoute');
-                this.router.navigateByUrl(this.returnUrl);
-            },
-            error: error => {
-                this.error = error;
-                this.loading = false;
-            }
-        });
+          this.router.navigateByUrl(this.returnUrl);
+        },
+        error: error => {
+          this.error = error;
+          this.loading = false;
+        }
+      });
   }
 }

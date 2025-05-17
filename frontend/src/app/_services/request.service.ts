@@ -27,40 +27,22 @@ export class RequestService {
     }
 
     create(request: any): Observable<any> {
-        // Ensure proper format for the backend
+        // Transform items to RequestItems format for Sequelize
         const transformedRequest = {
-            type: request.type,
-            status: 'Pending',
-            items: request.items?.map((item: any) => ({
-                name: item.name,
-                quantity: parseInt(item.quantity) || 1
-            })) || []
+            ...request,
+            RequestItems: request.items || []
         };
-        
-        // Remove any undefined or null properties
-        Object.keys(transformedRequest).forEach(key => 
-            transformedRequest[key] === undefined && delete transformedRequest[key]
-        );
-
+        delete transformedRequest.items;
         return this.http.post<any>(this.apiUrl, transformedRequest);
     }
 
     update(id: number, request: any): Observable<any> {
-        // Ensure proper format for the backend
+        // Transform items to RequestItems format for Sequelize
         const transformedRequest = {
-            type: request.type,
-            status: request.status,
-            items: request.items?.map((item: any) => ({
-                name: item.name,
-                quantity: parseInt(item.quantity) || 1
-            })) || []
+            ...request,
+            RequestItems: request.items || []
         };
-        
-        // Remove any undefined or null properties
-        Object.keys(transformedRequest).forEach(key => 
-            transformedRequest[key] === undefined && delete transformedRequest[key]
-        );
-
+        delete transformedRequest.items;
         return this.http.put<any>(`${this.apiUrl}/${id}`, transformedRequest);
     }
 

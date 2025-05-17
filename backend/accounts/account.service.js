@@ -36,7 +36,7 @@ async function authenticate({ email, password, ipAddress }) {
         console.log(`Authentication failed: No account found for ${email}`);
         throw 'Email or password is incorrect';
     }
-
+    
     // If password is a hash (from verified accounts login), compare directly
     const isHashedPassword = password.startsWith('$2');
     const passwordValid = isHashedPassword 

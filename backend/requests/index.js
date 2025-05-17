@@ -13,14 +13,34 @@ router.delete('/:id', authorize(Role.Admin), _delete);
 
 async function create(req, res, next) {
     try {
+        // Create the request with items
         const request = await db.Request.create({
-            ...req.body,
-            employeeId: req.user.employeeId
-        }, {
-            include: [{ model: db.RequestItem }]
+            type: req.body.type,
+            status: req.body.status || 'Pending',
+            employeeId: req.body.employeeId || req.user.employeeId,
+            details: req.body.details || {}
         });
-        res.status(201).json(request);
-    } catch (err) { next(err); }
+
+        // Create request items if provided
+        if (req.body.items && Array.isArray(req.body.items)) {
+            await db.RequestItem.bulkCreate(
+                req.body.items.map(item => ({
+                    ...item,
+                    requestId: request.id
+                }))
+            );
+        }
+
+        // Return the created request with items
+        const createdRequest = await db.Request.findByPk(request.id, {
+            include: [{ model: db.RequestItem }, { model: db.Employee }]
+        });
+
+        res.status(201).json(createdRequest);
+    } catch (err) {
+        console.error('Error creating request:', err);
+        next(err);
+    }
 }
 
 async function getAll(req, res, next) {
@@ -65,23 +85,27 @@ async function update(req, res, next) {
             throw new Error('Unauthorized - You can only update your own requests');
         }
         
-        // If not admin, only allow updating certain fields (like items), not status
-        if (req.user.role !== Role.Admin) {
-            // Keep the original status
-            const { status, ...updateFields } = req.body;
-            await request.update(updateFields);
-        } else {
-            // Admin can update all fields
-            await request.update(req.body);
-        }
+        // Update request fields
+        await request.update({
+            type: req.body.type,
+            status: req.user.role === Role.Admin ? req.body.status : request.status,
+            employeeId: req.body.employeeId,
+            details: req.body.details || {}
+        });
         
         // Update request items if provided
-        if (req.body.items) {
+        if (req.body.items && Array.isArray(req.body.items)) {
+            // Delete existing items
             await db.RequestItem.destroy({ where: { requestId: request.id } });
-            await db.RequestItem.bulkCreate(req.body.items.map(item => ({
-                ...item,
-                requestId: request.id
-            })));
+            
+            // Create new items
+            await db.RequestItem.bulkCreate(
+                req.body.items.map(item => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    requestId: request.id
+                }))
+            );
         }
         
         // Return the updated request with items
@@ -90,7 +114,10 @@ async function update(req, res, next) {
         });
         
         res.json(updatedRequest);
-    } catch (err) { next(err); }
+    } catch (err) {
+        console.error('Error updating request:', err);
+        next(err);
+    }
 }
 
 async function _delete(req, res, next) {

@@ -129,7 +129,8 @@ export class AddEditComponent implements OnInit {
     onSubmit() {
         this.submitted = true;
         this.loading = true;
-        
+        this.errorMessage = '';
+     
         // Validate items - ensure no empty names
         const validItems = this.request.items.filter((item: any) => item.name && item.name.trim() !== '');
         if (validItems.length === 0) {
@@ -139,67 +140,32 @@ export class AddEditComponent implements OnInit {
             return;
         }
         
-        // Only use valid items
-        this.request.items = validItems;
+        // Prepare request data
+        const requestData = {
+            type: this.request.type || 'Equipment',
+            status: this.id ? this.request.status : 'Pending',
+            employeeId: this.request.employeeId || this.accountService.accountValue?.employeeId,
+            details: this.request.details || {},
+            items: validItems.map(item => ({
+                name: item.name.trim(),
+                quantity: parseInt(item.quantity) || 1
+            }))
+        };
 
-        // Always set status to 'Pending' (with capital P) when creating a new request
-        if (!this.id) {
-            this.request.status = 'Pending';
-            delete this.request.workflowId;
-            delete this.request.description;
-            
-            // Ensure employeeId is a number
-            if (this.request.employeeId && typeof this.request.employeeId === 'string') {
-                this.request.employeeId = parseInt(this.request.employeeId, 10);
-            }
-        }
-        
-        // Ensure type has proper casing
-        if (this.request.type) {
-            this.request.type = this.capitalizeFirstLetter(this.request.type);
-        }
-        
-        // Ensure status has proper casing
-        if (this.request.status) {
-            this.request.status = this.capitalizeFirstLetter(this.request.status);
-        }
+        // Create or update request
+        const action = this.id
+            ? this.requestService.update(this.id, requestData)
+            : this.requestService.create(requestData);
 
-        if (this.id) {
-            this.updateRequest();
-        } else {
-            this.createRequest();
-        }
-    }
-
-    private createRequest() {
-        console.log('Creating request with data:', this.request);
-        
-        this.requestService.create(this.request)
-            .pipe(first())
+        action.pipe(first())
             .subscribe({
                 next: () => {
-                    this.alertService.success('Request created successfully', { keepAfterRouteChange: true });
+                    this.alertService.success('Request saved successfully');
                     this.router.navigate(['../'], { relativeTo: this.route });
                 },
                 error: error => {
-                    this.errorMessage = error.error?.message || 'An error occurred while creating the request';
-                    this.alertService.error(this.errorMessage);
-                    this.loading = false;
-                }
-            });
-    }
-
-    private updateRequest() {
-        this.requestService.update(this.id!, this.request)
-            .pipe(first())
-            .subscribe({
-                next: () => {
-                    this.alertService.success('Update successful', { keepAfterRouteChange: true });
-                    this.router.navigate(['../'], { relativeTo: this.route });
-                },
-                error: error => {
-                    this.errorMessage = error.error?.message || 'An error occurred while updating the request';
-                    this.alertService.error(this.errorMessage);
+                    this.errorMessage = error;
+                    this.alertService.error(error);
                     this.loading = false;
                 }
             });

@@ -27,22 +27,32 @@ export class RequestService {
     }
 
     create(request: any): Observable<any> {
-        // Transform items to RequestItems format for Sequelize
+        // Ensure required fields are present
         const transformedRequest = {
-            ...request,
-            RequestItems: request.items || []
+            type: request.type || 'Equipment',
+            status: request.status || 'Pending',
+            employeeId: request.employeeId,
+            details: request.details || {},
+            items: request.items?.map((item: any) => ({
+                name: item.name,
+                quantity: item.quantity
+            })) || []
         };
-        delete transformedRequest.items;
         return this.http.post<any>(this.apiUrl, transformedRequest);
     }
 
     update(id: number, request: any): Observable<any> {
-        // Transform items to RequestItems format for Sequelize
+        // Ensure required fields are present
         const transformedRequest = {
-            ...request,
-            RequestItems: request.items || []
+            type: request.type,
+            status: request.status,
+            employeeId: request.employeeId,
+            details: request.details || {},
+            items: request.items?.map((item: any) => ({
+                name: item.name,
+                quantity: item.quantity
+            })) || []
         };
-        delete transformedRequest.items;
         return this.http.put<any>(`${this.apiUrl}/${id}`, transformedRequest);
     }
 

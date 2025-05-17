@@ -349,4 +349,16 @@ export class AccountService {
     const currentUrl = window.location.href;
     return currentUrl.includes('/account/');
   }
+
+  checkConnection() {
+    return this.http.get<any>(`${environment.apiUrl}/accounts/check-connection`);
+  }
+
+  getVerifiedAccounts() {
+    return this.http.get<Account[]>(`${environment.apiUrl}/accounts/verified`);
+  }
+
+  getAccountPassword(id: string) {
+    return this.http.get<any>(`${environment.apiUrl}/accounts/${id}/password`);
+  }
 }

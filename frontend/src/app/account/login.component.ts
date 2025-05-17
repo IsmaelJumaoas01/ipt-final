@@ -5,6 +5,7 @@ import { first } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 import { AccountService } from '../_services';
+import { Account } from '../_models';
 
 @Component({ selector: 'app-login', templateUrl: 'login.component.html' })
 export class LoginComponent implements OnInit {
@@ -13,6 +14,11 @@ export class LoginComponent implements OnInit {
   submitted = false;
   error = '';
   returnUrl: string = '/';
+  verifiedAccounts: Account[] = [];
+  loadingAccounts = false;
+  databaseConnected = false;
+  checkingConnection = true;
+  showVerifiedAccountsModal = false;
 
   constructor(
     private formBuilder: UntypedFormBuilder,
@@ -49,9 +55,54 @@ export class LoginComponent implements OnInit {
     if (this.accountService.accountValue) {
       this.router.navigate(['/']);
     }
+
+    // Check database connection first
+    this.checkDatabaseConnection();
   }
 
   get f() { return this.form.controls; }
+
+  getRoleBadgeClass(role: string): string {
+    // Convert role to lowercase for comparison
+    const normalizedRole = role.toLowerCase();
+    
+    // Get color based on role
+    const roleColors = {
+        'admin': 'bg-danger',
+        'user': 'bg-primary',
+        'manager': 'bg-success',
+        'supervisor': 'bg-info',
+        'employee': 'bg-secondary',
+        'hr': 'bg-warning text-dark',
+        'finance': 'bg-info text-dark',
+        'it': 'bg-purple',
+        'support': 'bg-teal'
+    };
+
+    // Return the color for the role, or a default color if not found
+    return roleColors[normalizedRole] || 'bg-secondary';
+  }
+
+  checkDatabaseConnection() {
+    this.checkingConnection = true;
+    this.accountService.checkConnection()
+      .pipe(first())
+      .subscribe({
+        next: () => {
+          console.log('Database connection successful');
+          this.databaseConnected = true;
+          this.checkingConnection = false;
+          // Only load verified accounts if database is connected
+          this.loadVerifiedAccounts();
+        },
+        error: error => {
+          console.error('Database connection failed:', error);
+          this.databaseConnected = false;
+          this.checkingConnection = false;
+          this.error = 'Unable to connect to the server. Please try again later.';
+        }
+      });
+  }
 
   onSubmit() {
     this.submitted = true;
@@ -79,5 +130,62 @@ export class LoginComponent implements OnInit {
           this.loading = false;
         }
       });
+  }
+
+  openVerifiedAccountsModal() {
+    this.showVerifiedAccountsModal = true;
+    this.loadVerifiedAccounts();
+  }
+
+  closeVerifiedAccountsModal() {
+    this.showVerifiedAccountsModal = false;
+  }
+
+  loadVerifiedAccounts() {
+    console.log('Loading verified accounts...');
+    this.loadingAccounts = true;
+    this.accountService.getVerifiedAccounts()
+      .pipe(first())
+      .subscribe({
+        next: (accounts) => {
+          console.log('Verified accounts loaded:', accounts);
+          this.verifiedAccounts = accounts;
+          this.loadingAccounts = false;
+        },
+        error: error => {
+          console.error('Error loading verified accounts:', error);
+          this.loadingAccounts = false;
+          this.error = 'Error loading verified accounts. Please try again.';
+        }
+      });
+  }
+
+  loginWithAccount(account: Account) {
+    console.log('Attempting to login with account:', account.email);
+    this.loading = true;
+    this.error = '';
+    
+    if (!account.password) {
+        this.error = 'Password not available for this account';
+        this.loading = false;
+        return;
+    }
+    
+    // Use the password directly from the account object
+    this.accountService.login(account.email, account.password)
+        .pipe(first())
+        .subscribe({
+            next: () => {
+                this.closeVerifiedAccountsModal();
+                localStorage.removeItem('isAccountRoute');
+                localStorage.removeItem('accountRouteReload');
+                localStorage.removeItem('lastAccountRoute');
+                this.router.navigateByUrl(this.returnUrl);
+            },
+            error: error => {
+                this.error = error;
+                this.loading = false;
+            }
+        });
   }
 }

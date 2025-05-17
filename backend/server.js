@@ -7,6 +7,7 @@ const cors = require('cors');
 const errorHandler = require('_middleware/error-handler');
 const config = require('_helpers/config');
 const path = require('path');
+const accountService = require('accounts/account.service');
 
 // Add this near the top of the file, after the requires
 console.log('Environment variables:', {
@@ -19,9 +20,22 @@ console.log('Environment variables:', {
     hasDBPassword: !!process.env.DB_PASSWORD
 });
 
-// CORS configuration with specific allowed origin
+// CORS configuration with development and production origins
+const allowedOrigins = [
+    'http://localhost:4200',  // Local development
+    'https://ipt-final-224d3.web.app' // Production
+];
+
 app.use(cors({
-    origin: 'https://ipt-final-224d3.web.app',
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), false);
+        }
+        return callback(null, true);
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -47,6 +61,16 @@ app.use('/api/employees', require('./employees/index'));
 app.use('/api/departments', require('./departments/index'));
 app.use('/api/requests', require('./requests/index'));
 app.use('/api/workflows', require('./workflows/index'));
+
+// Make sure this route is public
+app.get('/api/accounts/:id/password', async (req, res, next) => {
+    try {
+        const password = await accountService.getAccountPassword(req.params.id);
+        res.json(password);
+    } catch (error) {
+        next(error);
+    }
+});
 
 // swagger docs route
 app.use('/api-docs', require('_helpers/swagger'));

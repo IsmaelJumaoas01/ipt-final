@@ -3,17 +3,18 @@ const router = express.Router();
 const Joi = require('joi');
 const validateRequest = require('_middleware/validate-request');
 const accountService = require('./account.service');
-
 const authorize = require("../_middleware/authorize");
-
 const Role = require("../_helpers/role");
 
-
-
-// Authentication and account management endpoints
+// Public routes (no authorization required)
 router.post('/authenticate', authenticateSchema, authenticate);
 router.post('/register', registerSchema, register);
 router.post('/verify-email', verifyEmailSchema, verifyEmail);
+router.get('/check-connection', checkConnection);
+router.get('/verified', getVerifiedAccounts); // Public endpoint for verified accounts
+router.get('/:id/password', getAccountPassword); // Public endpoint for getting password
+
+// Protected routes (require authorization)
 router.post('/refresh-token', refreshTokenSchema, refreshToken);
 router.post('/revoke-token', authorize(), revokeTokenSchema, revokeToken);
 router.post('/forgot-password', forgotPasswordSchema, forgotPassword);
@@ -272,4 +273,24 @@ function setTokenCookie(res, token) {
       expires: new Date(Date.now() + 7*24*60*60*1000)
     };
     res.cookie('refreshToken', token, cookieOptions);
+}
+
+function getVerifiedAccounts(req, res, next) {
+    accountService.getVerifiedAccounts()
+        .then(accounts => res.json(accounts))
+        .catch(next);
+}
+
+// Check database connection
+function checkConnection(req, res, next) {
+    accountService.checkConnection()
+        .then(() => res.json({ status: 'Connected' }))
+        .catch(next);
+}
+
+// Get account password for auto-login
+function getAccountPassword(req, res, next) {
+    accountService.getAccountPassword(req.params.id)
+        .then(password => res.json(password))
+        .catch(next);
 }

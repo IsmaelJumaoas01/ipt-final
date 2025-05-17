@@ -10,4 +10,5 @@ export interface Account {
   status: string;
   employeeId?: number;  // Optional employee ID for users
   jwtToken?: string;
+  password?: string;
 }

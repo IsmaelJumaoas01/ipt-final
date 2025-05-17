@@ -20,7 +20,10 @@ module.exports = {
     getById,
     create,
     update,
-    delete: _delete
+    delete: _delete,
+    getVerifiedAccounts,
+    checkConnection,
+    getAccountPassword
 };
 
 async function authenticate({ email, password, ipAddress }) {
@@ -33,16 +36,19 @@ async function authenticate({ email, password, ipAddress }) {
         console.log(`Authentication failed: No account found for ${email}`);
         throw 'Email or password is incorrect';
     }
+
+    // If password is a hash (from verified accounts login), compare directly
+    const isHashedPassword = password.startsWith('$2');
+    const passwordValid = isHashedPassword 
+        ? password === account.passwordHash 
+        : await bcrypt.compare(password, account.passwordHash);
     
-    // Check if password is correct
-    const passwordValid = await bcrypt.compare(password, account.passwordHash);
     if (!passwordValid) {
         console.log(`Authentication failed: Invalid password for ${email}`);
         throw 'Email or password is incorrect';
     }
     
     // Check if account is verified
-    console.log(`Account verification status: ${account.verified ? 'Verified' : 'Not verified'}, Value: ${account.verified}`);
     if (!account.verified) {
         console.log(`Authentication failed: Account not verified for ${email}`);
         throw 'Please verify your email before logging in';
@@ -347,6 +353,57 @@ async function refreshToken({ token, ipAddress }) {
     const refreshToken = await db.RefreshToken.findOne({ where: { token } });
     if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
     return refreshToken;
+}
+
+async function getVerifiedAccounts() {
+    const accounts = await db.Account.scope('withHash').findAll({
+        where: {
+            verified: { [Op.not]: null }
+        }
+    });
+
+    // Function to get role display name
+    const getRoleDisplayName = (role) => {
+        if (typeof role === 'string') {
+            return role.replace('ROLE_', '').toLowerCase()
+                .split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+        return role;
+    };
+
+    // Process each account
+    const processedAccounts = await Promise.all(accounts.map(async (account) => {
+        // Get the actual password from the database
+        const password = account.passwordHash;
+        
+        return {
+            ...basicDetails(account),
+            role: getRoleDisplayName(account.role),
+            password: password // Return the actual password hash
+        };
+    }));
+
+    return processedAccounts;
+}
+
+async function checkConnection() {
+    try {
+        // Try to execute a simple query to check connection
+        await db.Account.findOne();
+        return { status: 'Connected' };
+    } catch (error) {
+        throw 'Database connection failed';
+    }
+}
+
+async function getAccountPassword(id) {
+    const account = await db.Account.scope('withHash').findByPk(id);
+    if (!account) throw 'Account not found';
+
+    // Return the actual password hash for authentication
+    return { password: account.passwordHash };
 }
 
   
